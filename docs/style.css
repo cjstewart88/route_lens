@@ -20,7 +20,7 @@ main{padding-bottom:28px}.calculator #calcError:empty{display:none}
 
 .ride-time-fields{display:grid;grid-template-columns:1fr;gap:5px}.ride-time-fields label:not(:first-child){margin-top:10px}.ride-time-fields input{width:100%;padding:10px 12px;border:1px solid #3d4f54;border-radius:7px;background:#162125;color:var(--ink);font-variant-numeric:tabular-nums}.calculator #rideTimeSaveStatus{margin-top:12px}
 
-.intro h1 .route-distance{display:inline-block;margin-left:.18em;color:var(--muted);font-size:.72em;letter-spacing:-.025em;font-weight:600;white-space:nowrap}.explorer-heading{grid-column:1/-1;border-bottom:1px solid var(--line)}.explorer-heading h2{margin:0;font-size:12px;letter-spacing:1.7px}@media(max-width:720px){.map-panel{grid-row:2}.scrubber{grid-row:3}.street-panel{grid-row:4;border-top:1px solid var(--line)}}
+.explorer-heading{grid-column:1/-1;border-bottom:1px solid var(--line)}.explorer-heading h2{margin:0;font-size:12px;letter-spacing:1.7px}@media(max-width:720px){.map-panel{grid-row:2}.scrubber{grid-row:3}.street-panel{grid-row:4;border-top:1px solid var(--line)}}
 
 .ride-total output{display:block;color:var(--ink);font:800 clamp(1.55rem,3vw,2rem) Manrope,sans-serif;margin-top:3px}
 
@@ -30,7 +30,7 @@ main{padding-bottom:28px}.calculator #calcError:empty{display:none}
 
 .scrub-controls{display:flex;align-items:center;gap:12px;margin-top:8px}.scrub-controls #position{flex:1;min-width:0;width:auto;margin:0}.scrub-controls .playback-button{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;padding:0}.playback-icon{width:0;height:0;margin-left:2px;border:8px solid transparent;border-right:0;border-left:12px solid currentColor}.playback-button[data-playing=true] .playback-icon{width:13px;height:15px;margin:0;border:0;border-left:4px solid currentColor;border-right:4px solid currentColor}
 
-.intro h1 #routeTitle{color:var(--ink)}.route-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}.route-actions a{text-decoration:none}.route-actions .light{white-space:nowrap}.gpx-message{margin:-10px 0 16px;color:var(--muted);font-size:14px}.gpx-share-url{width:100%;padding:10px;margin-bottom:16px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}.empty-route{padding:32px}.empty-route p{color:var(--muted)}#makeupNote{margin:0 0 12px}@media(max-width:720px){.intro{display:flex;flex-direction:column}.route-actions{justify-content:flex-start}}
+.route-actions{display:flex;gap:8px;justify-self:end}.route-actions a{text-decoration:none}.route-actions .light{white-space:nowrap}.gpx-message{margin:-10px 0 16px;color:var(--muted);font-size:14px}.gpx-share-url{width:100%;padding:10px;margin-bottom:16px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}.empty-route{padding:32px}.empty-route p{color:var(--muted)}#makeupNote{margin:0 0 12px}
 
 .empty-route, #importDialog { width: min(100%, 36rem); }
 #importDialog { color: var(--ink); max-width: calc(100% - 2rem); }
@@ -93,3 +93,22 @@ header #gpxUpload { margin-left: auto; }
 .route-action .action-content { display: inline-flex; align-items: center; gap: .4rem; }
 .route-action svg { width: 1.1rem; height: 1.1rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .route-actions .route-action:hover { color: #e1efdf; }
+
+.intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .35rem 1rem;
+}
+.intro #routeTitle {
+  grid-column: 1 / -1;
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+.intro .route-distance {
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
