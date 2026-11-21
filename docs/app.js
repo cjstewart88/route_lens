@@ -1,4 +1,5 @@
 import {parseGpx, encodeGpx, decodeGpx, maxGpxBytes, maxSharedUrlLength} from './gpx.mjs';
+import {lookupRouteMakeup} from './makeup.mjs';
 import {MILE,categories,pointAt,routeHeading,tripDistance,tripPosition,calculate,composition,sampleType} from './core.mjs';
 const $=id=>document.getElementById(id);let route,map,marker,line,selected=0,travelDirection=1,tripLeg="outbound",tripMeters=0,analysis,syncTimer,selectedView,directionAnchor=0,overrides={};
 const storageKey = kind => `routeLens.${kind}.${route.id}`;
@@ -232,6 +233,7 @@ let currentGpx;
 let downloadUrl;
 let routeRequest = 0;
 let mapListeners;
+let makeupRequest;
 
 function message(text) {
   const status = $('gpxMessage');
@@ -307,7 +309,35 @@ function drawRouteMap() {
   $('fit').onclick = fitRoute;
 }
 
+function setMakeupStatus(text, retry = false) {
+  const note = $('makeupNote');
+  note.textContent = text;
+  note.hidden = !text;
+  $('makeupRetry').hidden = !retry;
+}
+
+async function analyzeMakeup() {
+  makeupRequest?.abort();
+  const request = new AbortController();
+  const currentRoute = route;
+  makeupRequest = request;
+  setMakeupStatus('Checking nearby roads and paths…');
+  try {
+    const estimate = await lookupRouteMakeup(currentRoute, currentGpx, request.signal);
+    if (request.signal.aborted) return;
+    analysis = estimate;
+    $('compositionBar').hidden = false;
+    $('compositionRows').hidden = false;
+    drawComposition();
+    setMakeupStatus('');
+  } catch (error) {
+    if (request.signal.aborted) return;
+    setMakeupStatus(error.message, error.message.includes('Try again'));
+  }
+}
+
 function presentRoute(nextRoute, bytes, estimate) {
+  makeupRequest?.abort();
   resetViewer();
   mapListeners?.abort();
   map?.remove();
@@ -323,7 +353,9 @@ function presentRoute(nextRoute, bytes, estimate) {
     try { overrides = JSON.parse(localStorage.getItem(storageKey('overrides')) || '{}') || {}; } catch {}
   }
   analysis = estimate ?? {samples: [{start: 0, end: route.distanceMeters, category: 'unknown'}]};
-  $('makeupNote').hidden = !!estimate;
+  $('compositionBar').hidden = !estimate;
+  $('compositionRows').hidden = !estimate;
+  setMakeupStatus('');
   $('routeTitle').textContent = route.name;
   document.title = route.name + ' · Route Lens';
   $('routeDistance').textContent = (tripDistance(route) / MILE).toFixed(2) + ' mi';
@@ -346,7 +378,8 @@ function presentRoute(nextRoute, bytes, estimate) {
   slider.step = 'any';
   slider.value = 0;
   drawRouteMap();
-  drawComposition();
+  if (estimate) drawComposition();
+  else void analyzeMakeup();
   choose(0);
   $('routePlayback').disabled = false;
   message('');
@@ -438,6 +471,7 @@ function initRouteControls() {
     }
   };
   $('gpxShare').onclick = shareRoute;
+  $('makeupRetry').onclick = analyzeMakeup;
   const slider = $('position');
   slider.addEventListener('pointerdown', pausePlayback);
   slider.oninput = event => {
