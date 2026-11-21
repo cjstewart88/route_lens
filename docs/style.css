@@ -88,3 +88,10 @@ header #gpxUpload { margin-left: auto; }
 #shareToast { position: fixed; z-index: 1500; left: 50%; bottom: max(1.25rem, env(safe-area-inset-bottom)); transform: translateX(-50%); width: max-content; max-width: calc(100% - 2rem); padding: .7rem 1rem; color: #edf5ef; background: #293c34; border: 1px solid #597460; border-radius: .65rem; box-shadow: 0 4px 18px #0005; pointer-events: none; }
 #shareToast:empty { padding: 0; border: 0; box-shadow: none; }
 @media (max-width: 720px) { .map-panel { grid-row: 1; } .scrubber { grid-row: 2; } .street-panel { grid-row: 3; } }
+
+.route-actions .route-action { display: inline-grid; place-items: center; background: transparent; }
+.route-action > * { grid-area: 1 / 1; }
+.route-action .action-size { visibility: hidden; }
+.route-action .action-content { display: inline-flex; align-items: center; gap: .4rem; }
+.route-action svg { width: 1.1rem; height: 1.1rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.route-actions .route-action:hover { border-color: #849d93; color: #e1efdf; }
