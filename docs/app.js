@@ -6,6 +6,7 @@ import {listRecentRoutes, readRecentFile, forgetRecentRoute, rememberRoute} from
 import {MILE,categories,pointAt,routeHeading,tripDistance,tripPosition,calculate,composition,sampleType} from './core.mjs?v=georgia-1';
 const $=id=>document.getElementById(id);let route,map,marker,line,selected=0,travelDirection=1,tripLeg="outbound",tripMeters=0,analysis,syncTimer,selectedView,directionAnchor=0,overrides={};
 const storageKey = kind => `routeLens.${kind}.${route.id}`;
+const embedKey = document.querySelector('meta[name="maps-embed-key"]').content.trim();
 const playbackStepMeters = 160;
 const playbackHoldMs = 1000;
 const playbackLookahead = 2;
@@ -47,14 +48,19 @@ function nextPlaybackPosition(meters) {
 
 function streetViewAt(meters, direction) {
   const point = pointAt(route, meters);
+  const samples = analysis.samples;
+  const index = Math.min(Math.floor(meters / 25), samples.length - 1);
+  const sample = samples[index];
+  const isPath = sample && meters >= sample.start && meters <= sample.end && sampleType(sample, overrides) === 'path';
   return {
+    radius: embedKey && isPath ? 15 : 50,
     coords: point.lat.toFixed(6) + ',' + point.lng.toFixed(6),
     yaw: routeHeading(route, meters, direction).toFixed(1),
   };
 }
 
 function viewKey(view) {
-  return view.coords + '/' + view.yaw;
+  return [view.coords, view.yaw, view.radius].join('/');
 }
 
 function fillPlaybackQueue() {
@@ -112,10 +118,16 @@ function loadStreetFrame(record) {
     record.ready = true;
     if (pendingFrame === record) showStreetFrame(record);
   }, {once: true});
-  const {coords, yaw} = record.view;
-  frame.src = 'https://www.google.com/maps?' + new URLSearchParams({
-    layer: 'c', cbll: coords, cbp: '12,' + yaw + ',0,0,0', output: 'svembed',
-  });
+  const {coords, yaw, radius} = record.view;
+  if (embedKey) {
+    frame.src = 'https://www.google.com/maps/embed/v1/streetview?' + new URLSearchParams({
+      key: embedKey, location: coords, heading: yaw, radius: String(radius),
+    });
+  } else {
+    frame.src = 'https://www.google.com/maps?' + new URLSearchParams({
+      layer: 'c', cbll: coords, cbp: '12,' + yaw + ',0,0,0', output: 'svembed',
+    });
+  }
   $('streetViewer').append(frame);
 }
 
@@ -177,7 +189,7 @@ function queueStreetView(view) {
 function choose(meters,pan=false,forcedLeg=null,inferLeg=false,directionHint=null){const next=meters>=route.distanceMeters?route.distanceMeters:Math.max(0,meters),delta=next-directionAnchor;const moved=Math.abs(delta)>2;if(moved||directionHint!==null){travelDirection=directionHint??(delta>0?1:-1);directionAnchor=next;}if(forcedLeg)tripLeg=forcedLeg;else if(inferLeg&&moved&&route.roundTrip!==false)tripLeg=travelDirection>0?'outbound':'return';selected=next;tripMeters=tripLeg==='outbound'?selected:tripDistance(route)-selected;const p=pointAt(route,selected);marker?.setLatLng([p.lat,p.lng]);if(pan&&map&&!map.getBounds().contains([p.lat,p.lng]))map.panTo([p.lat,p.lng]);$('position').value=tripMeters;$('mile').textContent=(tripMeters/MILE).toFixed(2);$('remaining').textContent=`${((tripDistance(route)-tripMeters)/MILE).toFixed(2)} mi to end`;const view = streetViewAt(selected, travelDirection);
 const arrow = marker?.getElement()?.querySelector('.travel-arrow');
 if (arrow) arrow.style.transform = 'rotate(' + view.yaw + 'deg)';
-if (!selectedView || selectedView.coords !== view.coords || selectedView.yaw !== view.yaw) {
+if (!selectedView || viewKey(selectedView) !== viewKey(view)) {
   selectedView = view;
   queueStreetView(view);
 }}
@@ -384,6 +396,7 @@ async function analyzeMakeup() {
     $('compositionBar').hidden = false;
     $('compositionRows').hidden = false;
     drawComposition();
+    choose(selected);
     setMakeupStatus('');
   } catch (error) {
     if (request.signal.aborted) return;
