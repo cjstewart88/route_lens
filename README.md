@@ -16,3 +16,16 @@ Download the Georgia OSM PBF extract and its GeoJSON boundary from [Geofabrik](h
 
 The tiles contain data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), under the [Open Database License 1.0](https://opendatacommons.org/licenses/odbl/1-0/). The manifest records the snapshot date.
 To refresh nearby stops from the same extract, run python scripts/build-places.py georgia-latest.osm.pbf docs/georgia/manifest.json docs/georgia-places.json and update the snapshot version in places.mjs.
+
+## Refresh map data
+
+A request to refresh or update map data means replacing the snapshot Route Lens uses for road surfaces and nearby train stations, bike shops, and gas stations. This is a manual refresh. Opening a route continues to work with the last published snapshot between refreshes.
+
+1. Check which snapshot the app uses in `docs/national.mjs` and read that branch's `manifest.json`. If the app is still on the Georgia snapshot, finish the initial nationwide release before changing its live data source.
+2. Download a dated `us-YYMMDD.osm.pbf`, its published MD5 file, and `us.geojson` from [Geofabrik's U.S. index](https://download.geofabrik.de/north-america/us/). Use the date in the download listing and verify the PBF against the matching checksum. A dated file can be resumed reliably. Keep these files in a workspace directory outside the repository.
+3. Install the build dependency with `python -m pip install osmium==4.3.2`. Run `python scripts/build-us.py <extract.pbf> <us.geojson> <fresh-output-directory>`. Allow space for the 12 GB input, the disk-backed node index, intermediate files, and Git packaging. The first U.S. build used a node index of roughly 26 GB. The build's `packs/` directory is the publishable output, and its manifest records the source timestamp.
+4. Validate road and stop ranges locally with routes in several regions, including Alaska and Hawaii. Check the checksum result, the manifest coverage, and the index offsets and lengths. The road classifier should receive gzipped records for each requested range. Keep the current production snapshot while validating.
+5. Publish `packs/` to a versioned data branch in this public repository from a separate checkout. Keep individual binary files below GitHub's 100 MB file limit and split large pushes into batches under GitHub's 2 GB push limit. Publish the manifest last. Confirm a cross-origin `Range` request to `raw.githubusercontent.com` returns HTTP 206 for an indexed tile before switching the app. GitHub Pages serves the app from `main:/docs`.
+6. Update the data branch in `docs/national.mjs` and bump the module URLs that import it, including the app and HTML entry point where needed. Publish the app and check a live route outside Georgia. If the private Route Lens deployment is being maintained, roll the same app update into it. Check GitHub's repository size before retaining multiple multi-gigabyte releases.
+
+Georgia is a fallback snapshot. For a Georgia-only refresh, use the commands in **Refresh Georgia road data**. The app reads road and stop data from [OpenStreetMap contributors](https://www.openstreetmap.org/copyright) under the [Open Database License](https://opendatacommons.org/licenses/odbl/1-0/).
