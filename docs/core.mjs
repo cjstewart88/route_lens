@@ -1,6 +1,6 @@
 export const MILE=1609.344;
 export const actualMph=25.99/(10113/3600);
-export const categories={sidewalk:{label:'Road / sidewalk',color:'#27857f'},gravel:{label:'Dirt / gravel road',color:'#c39365'},path:{label:'Dedicated / shared path',color:'#8ab637'},unknown:{label:'Unknown / ambiguous',color:'#bcc8cc'}};
+export const categories={sidewalk:{label:'Road / sidewalk',color:'#27857f'},gravel:{label:'Gravel road',color:'#c39365'},path:{label:'Dedicated',color:'#8ab637'},unknown:{label:'Unknown',color:'#bcc8cc'}};
 export function pointAt(route,meters){meters=Math.max(0,Math.min(route.distanceMeters,meters));let lo=0,hi=route.cumulative.length-1;while(lo<hi){const m=Math.floor((lo+hi+1)/2);if(route.cumulative[m]<=meters)lo=m;else hi=m-1;}const i=Math.min(lo,route.points.length-2),a=route.points[i],b=route.points[i+1],t=(meters-route.cumulative[i])/(route.cumulative[i+1]-route.cumulative[i]);return {lat:a[0]+(b[0]-a[0])*t,lng:a[1]+(b[1]-a[1])*t,ele:a[2]+(b[2]-a[2])*t,index:i,meters};}
 export function heading(a,b){const r=Math.PI/180,y=Math.sin((b.lng-a.lng)*r)*Math.cos(b.lat*r),x=Math.cos(a.lat*r)*Math.sin(b.lat*r)-Math.sin(a.lat*r)*Math.cos(b.lat*r)*Math.cos((b.lng-a.lng)*r);return (Math.atan2(y,x)/r+360)%360;}
 export function routeHeading(route, meters, direction = 1) {

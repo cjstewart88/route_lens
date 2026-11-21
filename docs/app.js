@@ -1,7 +1,7 @@
 import {parseGpx, encodeGpx, decodeGpx, maxGpxBytes, maxSharedUrlLength} from './gpx.mjs';
-import {lookupRouteMakeup} from './makeup.mjs?v=gravel-1';
+import {lookupRouteMakeup} from './makeup.mjs?v=groups-2';
 import {importRideWithGps} from './rwgps.mjs';
-import {MILE,categories,pointAt,routeHeading,tripDistance,tripPosition,calculate,composition,sampleType} from './core.mjs?v=gravel-1';
+import {MILE,categories,pointAt,routeHeading,tripDistance,tripPosition,calculate,composition,sampleType} from './core.mjs?v=groups-2';
 const $=id=>document.getElementById(id);let route,map,marker,line,selected=0,travelDirection=1,tripLeg="outbound",tripMeters=0,analysis,syncTimer,selectedView,directionAnchor=0,overrides={};
 const storageKey = kind => `routeLens.${kind}.${route.id}`;
 const playbackStepMeters = 160;
