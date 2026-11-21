@@ -200,7 +200,6 @@ function updateTripBar() {
   const miles = (tripMeters / MILE).toFixed(1);
   slider.value = tripMeters;
   slider.setAttribute('aria-valuetext', 'mile ' + miles);
-  slider.parentElement.style.setProperty('--trip-offset', (100 * tripMeters / total) + 'cqw');
   $('mile').textContent = miles;
   $('remaining').textContent = ((total - tripMeters) / MILE).toFixed(2) + ' mi to end';
 }

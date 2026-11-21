@@ -72,13 +72,11 @@ h1, h2, h3, .ride-total output { font-family: inherit; }
 .route-actions .route-action { background: transparent; }
 .light:focus-visible,a:focus-visible,input:focus-visible { outline: 2px solid #c9cad4; outline-offset: 3px; }
 
-.scrubber { padding: 17px clamp(10px, 2vw, 22px); }
+.scrubber { padding: 9px clamp(10px, 2vw, 22px); }
 .scrub-controls { margin: 0; padding: 0; align-items: center; gap: clamp(4px, 1vw, 12px); }
 .trip-track {
   flex: 1;
   min-width: 0;
-  position: relative;
-  container-type: inline-size;
   display: flex;
   align-items: center;
 }
@@ -88,13 +86,7 @@ h1, h2, h3, .ride-total output { font-family: inherit; }
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.trip-position-label {
-  position: absolute;
-  bottom: calc(100% + 5px);
-  left: 0;
-  transform: translateX(clamp(0px, calc(var(--trip-offset, 0px) - 50%), calc(100cqw - 100%)));
-  pointer-events: none;
-}
+.trip-position-label { min-width: 7.5ch; }
 .trip-position-label strong { color: var(--ink); }
 .scrub-controls .playback-button {
   flex-basis: 36px;
