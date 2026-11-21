@@ -180,8 +180,49 @@ if (!selectedView || selectedView.coords !== view.coords || selectedView.yaw !==
   queueStreetView(view);
 }}
 function nearest(latlng){const q=map.latLngToLayerPoint(latlng);let best=Infinity,meters=0;for(let i=1;i<route.points.length;i++){if(route.segmentBreaks?.has(i))continue;const a=map.latLngToLayerPoint(route.points[i-1].slice(0,2)),b=map.latLngToLayerPoint(route.points[i].slice(0,2)),dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((q.x-a.x)*dx+(q.y-a.y)*dy)/(dx*dx+dy*dy||1))),d=(q.x-a.x-t*dx)**2+(q.y-a.y-t*dy)**2;if(d<best){best=d;meters=route.cumulative[i-1]+t*(route.cumulative[i]-route.cumulative[i-1]);}}return meters;}
-function drawComposition(){const totals=composition(analysis.samples,overrides);$('compositionBar').replaceChildren();$('compositionRows').replaceChildren();for(const [key,c] of Object.entries(categories)){const pct=totals[key]/route.distanceMeters*100,bar=document.createElement('div');bar.style.width=pct+'%';bar.style.background=c.color;bar.title=`${c.label}: ${pct.toFixed(1)}%`;$('compositionBar').append(bar);const row=document.createElement('div');row.className='composition-row';const swatch=document.createElement('span');swatch.className='swatch';swatch.style.background=c.color;const label=document.createElement('span');label.textContent=c.label;const percent=document.createElement('strong');percent.textContent=pct.toFixed(1)+'%';const miles=document.createElement('small');miles.textContent=(totals[key]*tripDistance(route)/route.distanceMeters/MILE).toFixed(2)+' mi';row.append(swatch,label,percent,miles);$('compositionRows').append(row);}if(window.L&&map&&analysis.routeId){line?.remove();line=L.layerGroup().addTo(map);let current=null,coords=[];function flush(){if(coords.length>1)L.polyline(coords,{color:categories[current].color,weight:5,opacity:1,interactive:false}).addTo(line);}
- for(const s of analysis.samples){const cat=sampleType(s,overrides);if(cat!==current){flush();current=cat;const p=pointAt(route,s.start);coords=[[p.lat,p.lng]];}const p=pointAt(route,s.end);coords.push([p.lat,p.lng]);}flush();marker?.setZIndexOffset(1000);}}
+function drawComposition(){const totals=composition(analysis.samples,overrides);$('compositionBar').replaceChildren();$('compositionRows').replaceChildren();for(const [key,c] of Object.entries(categories)){const pct=totals[key]/route.distanceMeters*100,bar=document.createElement('div');bar.style.width=pct+'%';bar.style.background=c.color;bar.title=`${c.label}: ${pct.toFixed(1)}%`;$('compositionBar').append(bar);const row=document.createElement('div');row.className='composition-row';const swatch=document.createElement('span');swatch.className='swatch';swatch.style.background=c.color;const label=document.createElement('span');label.textContent=c.label;const percent=document.createElement('strong');percent.textContent=pct.toFixed(1)+'%';const miles=document.createElement('small');miles.textContent=(totals[key]*tripDistance(route)/route.distanceMeters/MILE).toFixed(2)+' mi';row.append(swatch,label,percent,miles);$('compositionRows').append(row);}drawSurfaceLines();}
+
+function drawSurfaceLines() {
+  if (!map || !analysis.samples.length) return;
+  line.clearLayers();
+  let sampleIndex = 0;
+  let activeCategory;
+  let coordinates = [];
+  function flush() {
+    if (coordinates.length > 1) {
+      L.polyline(coordinates, {color: categories[activeCategory].color, weight: 6, opacity: 1, interactive: false}).addTo(line);
+    }
+    coordinates = [];
+  }
+  for (let i = 1; i < route.points.length; i++) {
+    if (route.segmentBreaks.has(i)) {
+      flush();
+      continue;
+    }
+    const start = route.cumulative[i - 1];
+    const end = route.cumulative[i];
+    const [lat, lng] = route.points[i - 1];
+    const [nextLat, nextLng] = route.points[i];
+    let position = start;
+    while (position < end) {
+      while (sampleIndex < analysis.samples.length && analysis.samples[sampleIndex].end <= position) sampleIndex++;
+      const sample = analysis.samples[sampleIndex];
+      const category = sample ? sampleType(sample, overrides) : 'unknown';
+      if (category !== activeCategory) flush();
+      activeCategory = category;
+      if (!coordinates.length) {
+        const t = (position - start) / (end - start);
+        coordinates.push([lat + t * (nextLat - lat), lng + t * (nextLng - lng)]);
+      }
+      position = Math.min(end, sample?.end ?? end);
+      const t = (position - start) / (end - start);
+      coordinates.push([lat + t * (nextLat - lat), lng + t * (nextLng - lng)]);
+    }
+  }
+  flush();
+  routeHitLine.setStyle({opacity: 0});
+}
+
 const rideTimeStorageKey = 'routeLens.rideTime.v1';
 function updateRideTime() {
   if (!route) return;
@@ -258,6 +299,7 @@ function resetViewer() {
   $('streetViewer').dataset.ready = 'false';
 }
 
+let routeHitLine;
 function drawRouteMap() {
   if (!window.L) {
     $('map').textContent = 'The map library could not load. Use the distance slider to explore the route.';
@@ -277,7 +319,8 @@ function drawRouteMap() {
   const bounds = L.latLngBounds(coordinates);
   const fitRoute = () => map.fitBounds(bounds, {padding: [35, 30]});
   fitRoute();
-  const base = L.polyline(segments, {color: '#5faaa1', weight: 6, opacity: .95}).addTo(map);
+  line = L.layerGroup().addTo(map);
+  routeHitLine = L.polyline(segments, {color: categories.unknown.color, weight: 6, opacity: .95}).addTo(map);
   const finish = route.roundTrip === false ? 'End' : 'Turnaround';
   for (const [point, label] of [[coordinates[0], 'Start'], [coordinates.at(-1), finish]]) {
     L.marker(point, {icon: L.divIcon({className: 'endpoint', iconSize: [11, 11]})}).addTo(map).bindTooltip(label);
@@ -292,7 +335,7 @@ function drawRouteMap() {
   marker.on('dragend', () => choose(selected));
   map.on('click', event => { pausePlayback(); selectOnMap(event); });
   let draggingRoute = false;
-  base.on('mousedown', event => {
+  routeHitLine.on('mousedown', event => {
     pausePlayback();
     draggingRoute = true;
     map.dragging.disable();
