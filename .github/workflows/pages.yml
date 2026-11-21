@@ -1,0 +1,50 @@
+name: Deploy Route Lens
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - name: Configure Street View in the Pages artifact
+        env:
+          EMBED_KEY: ${{ secrets.MAPS_EMBED_BROWSER_KEY }}
+        run: |
+          python3 - <<'PY'
+          import html
+          import os
+          from pathlib import Path
+
+          page = Path("docs/index.html")
+          source = page.read_text()
+          placeholder = '<meta name="maps-embed-key" content="">'
+          if source.count(placeholder) != 1:
+              raise SystemExit("Expected an empty Maps Embed key in the tracked page")
+          value = html.escape(os.environ.get("EMBED_KEY", "").strip(), quote=True)
+          page.write_text(source.replace(placeholder, f'<meta name="maps-embed-key" content="{value}">'))
+          PY
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - name: Publish Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
