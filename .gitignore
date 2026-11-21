@@ -1,0 +1,3 @@
+*.gpx
+/docs/route.json
+/docs/classification.json
