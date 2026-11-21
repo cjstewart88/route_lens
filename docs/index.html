@@ -4,17 +4,29 @@
 <header><a class="brand" href="./"><span class="brand-icon">⌁</span> ROUTE LENS</a><span class="header-note">A closer look at your ride</span></header>
 <main>
 <section class="intro">
-  <div><div class="eyebrow">YOUR GPX, AT STREET LEVEL</div><h1><span id="routeTitle">Route Lens</span> <span id="routeDistance" class="route-distance"></span></h1></div>
+  <div><div class="eyebrow">YOUR ROUTE, AT STREET LEVEL</div><h1><span id="routeTitle">Route Lens</span> <span id="routeDistance" class="route-distance"></span></h1></div>
   <div class="route-actions">
-    <input id="gpxFile" type="file" accept=".gpx,application/gpx+xml" hidden>
-    <button id="gpxUpload" type="button" class="light">Upload GPX</button>
+    <button id="gpxUpload" type="button" class="light" aria-haspopup="dialog" hidden>Change route</button>
     <button id="gpxShare" type="button" class="light" hidden>Copy share link</button>
     <a id="gpxDownload" class="light" download hidden>Download GPX</a>
   </div>
 </section>
 <div id="gpxMessage" class="gpx-message" role="status" hidden></div>
 <input id="gpxShareUrl" class="gpx-share-url" type="url" aria-label="GPX share link" readonly hidden>
-<section id="emptyRoute" class="card empty-route"><h2>Open a GPX route</h2><p>Choose a GPX file from your device to explore it on the map. Route makeup uses a nearby map-data lookup from <a href="https://wiki.openstreetmap.org/wiki/Overpass_API">OpenStreetMap via Overpass</a>.</p></section>
+<section id="emptyRoute" class="card empty-route"><h2>Open a route</h2>
+  <div id="routeImporter">
+    <form id="linkForm"><label for="routeLink">Ride with GPS route link</label>
+      <div class="link-row"><input id="routeLink" type="text" inputmode="url" autocapitalize="none" spellcheck="false" placeholder="ridewithgps.com/routes/…" required><button class="light" id="openLink">Open route</button></div>
+    </form>
+    <div class="import-divider">or</div>
+    <input id="gpxFile" type="file" accept=".gpx,application/gpx+xml" hidden>
+    <button id="chooseFile" type="button" class="light">Upload GPX file</button>
+    <p id="importStatus" role="status"></p>
+  </div>
+</section>
+<dialog id="importDialog" class="card" aria-labelledby="importHeading">
+  <div class="dialog-heading"><h2 id="importHeading">Change route</h2><button id="closeImport" class="light" type="button" aria-label="Close">×</button></div>
+</dialog>
 <section id="routeExplorer" class="explorer" hidden>
 <div class="panel-heading explorer-heading"><h2 class="eyebrow">EXPLORE THE ROUTE</h2><button id="fit" class="light">Fit route</button></div>
 <div class="map-panel"><div id="map" aria-label="Interactive route map"><div class="loading">Loading your route…</div></div></div>

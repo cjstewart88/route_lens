@@ -1,5 +1,6 @@
 import {parseGpx, encodeGpx, decodeGpx, maxGpxBytes, maxSharedUrlLength} from './gpx.mjs';
 import {lookupRouteMakeup} from './makeup.mjs';
+import {importRideWithGps} from './rwgps.mjs';
 import {MILE,categories,pointAt,routeHeading,tripDistance,tripPosition,calculate,composition,sampleType} from './core.mjs';
 const $=id=>document.getElementById(id);let route,map,marker,line,selected=0,travelDirection=1,tripLeg="outbound",tripMeters=0,analysis,syncTimer,selectedView,directionAnchor=0,overrides={};
 const storageKey = kind => `routeLens.${kind}.${route.id}`;
@@ -369,7 +370,7 @@ function presentRoute(nextRoute, bytes, estimate) {
   $('emptyRoute').hidden = true;
   $('routeExplorer').hidden = false;
   $('routeResults').hidden = false;
-  $('gpxUpload').textContent = 'Upload different GPX';
+  $('gpxUpload').hidden = false;
   $('gpxShare').hidden = false;
   $('gpxDownload').hidden = false;
   $('gpxShareUrl').hidden = true;
@@ -458,22 +459,61 @@ async function shareRoute() {
 
 function initRouteControls() {
   const input = $('gpxFile');
-  $('gpxUpload').onclick = () => input.click();
-  input.onchange = async () => {
+  const dialog = $('importDialog');
+  const importer = $('routeImporter');
+  const status = $('importStatus');
+  let pending;
+  $('gpxUpload').onclick = () => {
+    pausePlayback();
+    dialog.append(importer);
+    status.textContent = '';
+    dialog.showModal();
+    $('routeLink').focus();
+  };
+  $('closeImport').onclick = () => dialog.close();
+  dialog.onclose = () => {
+    pending?.abort();
+    $('emptyRoute').append(importer);
+    $('gpxUpload').focus();
+  };
+  async function openRoute(read, filename) {
+    pending?.abort();
+    const controller = new AbortController();
+    pending = controller;
+    const request = ++routeRequest;
+    status.textContent = 'Opening route…';
+    $('openLink').disabled = true;
+    try {
+      const bytes = await read(controller.signal);
+      if (request !== routeRequest || controller.signal.aborted) return;
+      const nextRoute = parseGpx(bytes, filename);
+      presentRoute(nextRoute, bytes);
+      if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+      $('routeLink').value = '';
+      status.textContent = '';
+      if (dialog.open) dialog.close();
+    } catch (error) {
+      if (request === routeRequest && !controller.signal.aborted) status.textContent = error.message || 'Could not open this route.';
+    } finally {
+      if (pending === controller) {
+        pending = null;
+        $('openLink').disabled = false;
+      }
+    }
+  }
+  $('linkForm').onsubmit = event => {
+    event.preventDefault();
+    void openRoute(signal => importRideWithGps($('routeLink').value, signal));
+  };
+  $('chooseFile').onclick = () => input.click();
+  input.onchange = () => {
     const file = input.files[0];
     input.value = '';
     if (!file) return;
-    const request = ++routeRequest;
-    try {
+    void openRoute(async () => {
       if (file.size > maxGpxBytes) throw new Error('Choose a GPX file under 5 MB.');
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      if (request !== routeRequest) return;
-      const uploaded = parseGpx(bytes, file.name);
-      if (location.hash) history.replaceState(null, '', location.pathname + location.search);
-      presentRoute(uploaded, bytes);
-    } catch (error) {
-      if (request === routeRequest) message(error.message || 'The GPX file could not be opened.');
-    }
+      return new Uint8Array(await file.arrayBuffer());
+    }, file.name);
   };
   $('gpxShare').onclick = shareRoute;
   const slider = $('position');

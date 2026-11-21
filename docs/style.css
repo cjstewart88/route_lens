@@ -31,3 +31,15 @@ main{padding-bottom:28px}.calculator #calcError:empty{display:none}
 .scrub-controls{display:flex;align-items:center;gap:12px;margin-top:8px}.scrub-controls #position{flex:1;min-width:0;width:auto;margin:0}.scrub-controls .playback-button{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;padding:0}.playback-icon{width:0;height:0;margin-left:2px;border:8px solid transparent;border-right:0;border-left:12px solid currentColor}.playback-button[data-playing=true] .playback-icon{width:13px;height:15px;margin:0;border:0;border-left:4px solid currentColor;border-right:4px solid currentColor}
 
 .intro h1 #routeTitle{color:var(--ink)}.route-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}.route-actions a{text-decoration:none}.route-actions .light{white-space:nowrap}.gpx-message{margin:-10px 0 16px;color:var(--muted);font-size:14px}.gpx-share-url{width:100%;padding:10px;margin-bottom:16px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}.empty-route{padding:32px}.empty-route p{color:var(--muted)}#makeupNote{margin:0 0 12px}@media(max-width:720px){.intro{display:flex;flex-direction:column}.route-actions{justify-content:flex-start}}
+
+.empty-route, #importDialog { width: min(100%, 36rem); }
+#importDialog { color: var(--ink); max-width: calc(100% - 2rem); }
+#importDialog::backdrop { background: rgb(5 12 14 / .78); }
+.dialog-heading, .link-row { display: flex; gap: .65rem; align-items: center; }
+.dialog-heading { justify-content: space-between; }
+#routeImporter { margin-top: 1rem; }
+.link-row { margin-top: .4rem; flex-wrap: wrap; }
+#routeLink { min-width: 0; flex: 1 1 14rem; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); padding: .55rem .75rem; }
+.import-divider { display: flex; align-items: center; gap: .75rem; color: var(--muted); margin: 1rem 0; font-size: .875rem; }
+.import-divider::before, .import-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+#importStatus:not(:empty) { margin-top: 1rem; color: var(--ink); }
