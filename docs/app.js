@@ -186,13 +186,25 @@ function queueStreetView(view) {
   if (queued) begin();
   else syncTimer = setTimeout(begin, 450);
 }
-function choose(meters,pan=false,forcedLeg=null,inferLeg=false,directionHint=null){const next=meters>=route.distanceMeters?route.distanceMeters:Math.max(0,meters),delta=next-directionAnchor;const moved=Math.abs(delta)>2;if(moved||directionHint!==null){travelDirection=directionHint??(delta>0?1:-1);directionAnchor=next;}if(forcedLeg)tripLeg=forcedLeg;else if(inferLeg&&moved&&route.roundTrip!==false)tripLeg=travelDirection>0?'outbound':'return';selected=next;tripMeters=tripLeg==='outbound'?selected:tripDistance(route)-selected;const p=pointAt(route,selected);marker?.setLatLng([p.lat,p.lng]);if(pan&&map&&!map.getBounds().contains([p.lat,p.lng]))map.panTo([p.lat,p.lng]);$('position').value=tripMeters;$('mile').textContent=(tripMeters/MILE).toFixed(2);$('remaining').textContent=`${((tripDistance(route)-tripMeters)/MILE).toFixed(2)} mi to end`;const view = streetViewAt(selected, travelDirection);
+function choose(meters,pan=false,forcedLeg=null,inferLeg=false,directionHint=null){const next=meters>=route.distanceMeters?route.distanceMeters:Math.max(0,meters),delta=next-directionAnchor;const moved=Math.abs(delta)>2;if(moved||directionHint!==null){travelDirection=directionHint??(delta>0?1:-1);directionAnchor=next;}if(forcedLeg)tripLeg=forcedLeg;else if(inferLeg&&moved&&route.roundTrip!==false)tripLeg=travelDirection>0?'outbound':'return';selected=next;tripMeters=tripLeg==='outbound'?selected:tripDistance(route)-selected;const p=pointAt(route,selected);marker?.setLatLng([p.lat,p.lng]);if(pan&&map&&!map.getBounds().contains([p.lat,p.lng]))map.panTo([p.lat,p.lng]);updateTripBar();
+const view = streetViewAt(selected, travelDirection);
 const arrow = marker?.getElement()?.querySelector('.travel-arrow');
 if (arrow) arrow.style.transform = 'rotate(' + view.yaw + 'deg)';
 if (!selectedView || viewKey(selectedView) !== viewKey(view)) {
   selectedView = view;
   queueStreetView(view);
 }}
+function updateTripBar() {
+  const slider = $('position');
+  const total = tripDistance(route);
+  const miles = (tripMeters / MILE).toFixed(2);
+  slider.value = tripMeters;
+  slider.setAttribute('aria-valuetext', miles + ' mi into trip');
+  slider.parentElement.style.setProperty('--trip-offset', (100 * tripMeters / total) + 'cqw');
+  $('mile').textContent = miles;
+  $('remaining').textContent = ((total - tripMeters) / MILE).toFixed(2) + ' mi to end';
+}
+
 function nearest(latlng){const q=map.latLngToLayerPoint(latlng);let best=Infinity,meters=0;for(let i=1;i<route.points.length;i++){if(route.segmentBreaks?.has(i))continue;const a=map.latLngToLayerPoint(route.points[i-1].slice(0,2)),b=map.latLngToLayerPoint(route.points[i].slice(0,2)),dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((q.x-a.x)*dx+(q.y-a.y)*dy)/(dx*dx+dy*dy||1))),d=(q.x-a.x-t*dx)**2+(q.y-a.y-t*dy)**2;if(d<best){best=d;meters=route.cumulative[i-1]+t*(route.cumulative[i]-route.cumulative[i-1]);}}return meters;}
 function drawComposition(){const totals=composition(analysis.samples,overrides);$('compositionBar').replaceChildren();$('compositionRows').replaceChildren();for(const [key,c] of Object.entries(categories)){const pct=totals[key]/route.distanceMeters*100,bar=document.createElement('div');bar.style.width=pct+'%';bar.style.background=c.color;bar.title=`${c.label}: ${pct.toFixed(1)}%`;$('compositionBar').append(bar);const row=document.createElement('div');row.className='composition-row';const swatch=document.createElement('span');swatch.className='swatch';swatch.style.background=c.color;const label=document.createElement('span');label.textContent=c.label;const percent=document.createElement('strong');percent.textContent=pct.toFixed(1)+'%';const miles=document.createElement('small');miles.textContent=(totals[key]*tripDistance(route)/route.distanceMeters/MILE).toFixed(2)+' mi';row.append(swatch,label,percent,miles);$('compositionRows').append(row);}drawSurfaceLines();}
 
