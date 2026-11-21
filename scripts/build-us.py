@@ -1,9 +1,9 @@
 """Build range-addressable Route Lens packs from a Geofabrik extract (osmium 4.3.2)."""
+import argparse
 import collections
 import gzip
 import importlib
 import json
-import sys
 from pathlib import Path
 
 import osmium
@@ -28,7 +28,7 @@ def center(feature, points):
         return round((min(rows) + max(rows)) / 2), round((min(cols) + max(cols)) / 2)
 
 
-def build(pbf, boundary, work):
+def build(pbf, boundary, work, source=SOURCE):
     coverage = json.loads(boundary.read_text(encoding="utf-8"))
     if coverage["type"] == "Feature":
         coverage = coverage["geometry"]
@@ -108,9 +108,9 @@ def build(pbf, boundary, work):
     except PermissionError:
         # Windows can retain the mapped index until the process exits.
         pass
-    pack_snapshot(spool, output, coverage, version, count, place_count)
+    pack_snapshot(spool, output, coverage, version, count, place_count, source)
 
-def pack_snapshot(spool, output, coverage, version, count=None, place_count=None):
+def pack_snapshot(spool, output, coverage, version, count=None, place_count=None, source=SOURCE):
     pack_names = []
     for path in sorted(spool.glob("*.txt")):
         tiles = collections.defaultdict(bytearray)
@@ -145,10 +145,16 @@ def pack_snapshot(spool, output, coverage, version, count=None, place_count=None
         path.unlink()
     manifest = {"version": version, "packs": pack_names, "boundary": coverage, "wayCount": count,
                 "placeCount": place_count, "attribution": "© OpenStreetMap contributors",
-                "license": "https://opendatacommons.org/licenses/odbl/1-0/", "source": SOURCE}
+                "license": "https://opendatacommons.org/licenses/odbl/1-0/", "source": source}
     (output / "manifest.json").write_bytes(compact(manifest))
     print(f"Built {len(pack_names):,} packs", flush=True)
 
 
 if __name__ == "__main__":
-    build(*map(Path, sys.argv[1:]))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("pbf", type=Path)
+    parser.add_argument("boundary", type=Path)
+    parser.add_argument("output", type=Path)
+    parser.add_argument("--source", default=SOURCE, help="Geofabrik extract index URL")
+    args = parser.parse_args()
+    build(args.pbf, args.boundary, args.output, args.source)
