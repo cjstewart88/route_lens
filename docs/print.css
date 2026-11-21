@@ -1,0 +1,101 @@
+:root {
+  --paper: #f2e7ce;
+  --black: #20211d;
+  --orange: #ff7847;
+  --mint: #a5d4be;
+  --ink: var(--black);
+  --muted: #554f42;
+  --line: #59564b;
+  --teal: #21564b;
+  --bg: var(--paper);
+  color-scheme: light;
+}
+body {
+  background-color: var(--black);
+  background-image: radial-gradient(#47473e .7px, transparent .9px);
+  background-size: 4px 4px;
+  font-family: 'DM Sans', Arial, sans-serif;
+}
+main { max-width: 1380px; }
+h1, h2, .brand, .ride-total output {
+  font-family: Impact, Haettenschweiler, 'Arial Narrow', sans-serif;
+  font-weight: 900;
+  letter-spacing: -.025em;
+}
+.card, .explorer, .scrubber {
+  color: var(--black);
+  background: var(--paper);
+  border: 2px solid var(--black);
+  border-radius: 2px;
+}
+.card, .explorer { box-shadow: 4px 4px 0 #080906; }
+.card h2 { color: var(--black); text-transform: uppercase; line-height: 1.1; }
+.empty-route {
+  display: grid;
+  grid-template-columns: minmax(0,1.36fr) minmax(0,1fr);
+  grid-template-rows: auto auto 1fr;
+  align-items: start;
+  width: min(100%, 74rem);
+  margin: clamp(.5rem,5vh,4rem) auto;
+  padding: clamp(1rem,2.6vw,2.25rem);
+  column-gap: clamp(1rem,3vw,3rem);
+  border-top: 8px solid var(--orange);
+}
+.empty-route h1 {
+  grid-column: 1/-1;
+  width: 100%;
+  padding: 0 0 .12em;
+  margin-bottom: clamp(1rem,2vw,1.8rem);
+  border-bottom: 5px double var(--black);
+  text-transform: uppercase;
+  font-size: clamp(4rem,10.8vw,9.5rem);
+  letter-spacing: -.045em;
+  line-height: .96;
+}
+.courier {
+  grid-row: 2/4;
+  width: 100%; height: 100%; min-height: 19rem;
+  object-fit: cover; border: 2px solid var(--black);
+}
+.empty-route .import-intro { margin: 0; color: var(--black); font-size: 1.15rem; line-height: 1.4; max-width: 35ch; }
+.empty-route #routeImporter { margin-top: 1.25rem; }
+.light, #routeLink, .ride-time-fields input {
+  background: #fff7e8; border: 1.5px solid var(--black); border-radius: 2px; color: var(--black);
+}
+.light:hover, #chooseFile:hover, #recentList button:hover { background: #f3c89b; color: var(--black); }
+.empty-route #openLink, #openLink, .scrub-controls .playback-button {
+  color: var(--black); border-color: var(--black); background: var(--orange);
+}
+.empty-route #openLink:hover, #openLink:hover { background: #ffa67e; }
+#chooseFile { background: var(--mint); }
+#importDialog #chooseFile { width: 100%; }
+#routeLink::placeholder { color: #655e50; }
+.import-divider::before, .import-divider::after { background: transparent; border-top: 1px dashed var(--line); }
+header { background: var(--paper); border-bottom: 4px solid var(--orange); padding-block: .7rem; }
+.brand, .brand:hover { font-size: 1.55rem; letter-spacing: -.03em; color: var(--black); }
+.brand-icon { background: var(--black); color: var(--orange); padding: 0 .25em; transform: skewX(-9deg); }
+.intro #routeTitle { color: var(--paper); font-size: clamp(2.1rem,4.3vw,4.4rem); line-height: 1.06; }
+.intro .route-distance { color: var(--orange); font: bold 1.05rem 'Courier New',monospace; }
+.route-actions .route-action { color: var(--paper); }
+.route-actions .route-action:hover { color: var(--orange); }
+.card h2 { font-size: clamp(1.5rem,2.4vw,2.1rem); }
+.small,.map-credit { color: var(--muted); }
+.map-credit a:hover,.text-button:hover { color: #823811; }
+.explorer { border-color: var(--paper); }
+.scrubber { border-width: 2px 0 0; }
+#position, .place-toggles input { accent-color: #a63c17; }
+.composition-bar { border: 1px solid var(--black); border-radius: 0; height: 19px; }
+.composition-row { border-bottom: 1px dotted #a49b87; padding-bottom: .35rem; }
+.ride-total { background: var(--mint); border: 2px solid var(--black); border-radius: 0; }
+.estimate > span { color: var(--black); }
+#shareToast { background: var(--black); border-color: var(--mint); color: var(--paper); }
+#shareToast:empty { border: 0; }
+.inline-viewer .viewer-loading,.inline-viewer[data-ready=true] .viewer-loading,.loading,.gpx-message { color: var(--paper); }
+#recentHeading { font-size: 1.35rem; }
+#recentList button { box-shadow: none; }
+button:focus-visible,a:focus-visible,input:focus-visible { outline: 3px solid #087db0; outline-offset: 2px; }
+@media (max-width: 760px) {
+  .empty-route { grid-template-columns: minmax(0,1fr); grid-template-rows: auto; }
+  .courier { grid-row: auto; min-height: 0; height: auto; max-height: 15rem; margin-bottom: 1rem; }
+  .empty-route h1 { font-size: clamp(3.5rem,12vw,6rem); }
+}
