@@ -392,30 +392,33 @@ function presentRoute(nextRoute, bytes, estimate) {
   message('');
 }
 
+function setImportBusy(busy) {
+  $('routeImporter').setAttribute('aria-busy', String(busy));
+}
+
 async function loadSharedRoute(request) {
   const params = new URLSearchParams(location.hash.slice(1));
-  if (params.has('rwgps')) {
-    try {
+  const fromRwgps = params.has('rwgps');
+  setImportBusy(fromRwgps || params.has('gpx'));
+  if (!fromRwgps && !params.has('gpx')) return;
+  message('');
+  try {
+    if (fromRwgps) {
       const id = params.get('rwgps');
       if (!/^\d+$/.test(id)) throw new Error('This Ride with GPS route ID is invalid.');
-      message('Opening Ride with GPS route…');
       const {bytes} = await importRideWithGps('https://ridewithgps.com/routes/' + id);
       if (request === routeRequest) presentRoute({...parseGpx(bytes), rwgpsId: id}, bytes);
-    } catch (error) {
-      if (request === routeRequest) message(error.message);
+      return;
     }
-    return true;
-  }
-  if (!params.has('gpx')) return false;
-  try {
     const bytes = await decodeGpx(params.get('gpx'));
     const shared = parseGpx(bytes, params.get('name') || undefined);
     shared.roundTrip = params.get('round') === '1';
     if (request === routeRequest) presentRoute(shared, bytes);
-  } catch {
-    if (request === routeRequest) message('This GPX link could not be opened. Ask for the GPX file and upload it here.');
+  } catch (error) {
+    if (request === routeRequest) message(fromRwgps ? error.message : 'This GPX link could not be opened. Ask for the GPX file and upload it here.');
+  } finally {
+    if (request === routeRequest) setImportBusy(false);
   }
-  return true;
 }
 
 let shareToastTimer;
@@ -491,7 +494,9 @@ function initRouteControls() {
     const controller = new AbortController();
     pending = controller;
     const request = ++routeRequest;
-    status.textContent = 'Opening route…';
+    status.textContent = '';
+    message('');
+    setImportBusy(true);
     $('openLink').disabled = true;
     try {
       const {bytes, rwgpsId} = await read(controller.signal);
@@ -508,6 +513,7 @@ function initRouteControls() {
     } finally {
       if (pending === controller) {
         pending = null;
+        if (request === routeRequest) setImportBusy(false);
         $('openLink').disabled = false;
       }
     }

@@ -43,6 +43,21 @@ main{padding-bottom:28px}.calculator #calcError:empty{display:none}
 .import-divider { display: flex; align-items: center; gap: .75rem; color: var(--muted); margin: 1rem 0; font-size: .875rem; }
 .import-divider::before, .import-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 #importStatus:not(:empty) { margin-top: 1rem; color: var(--ink); }
+#routeImporter { position: relative; }
+#routeImporter::before {
+  content: ''; position: absolute; inset: -.55rem 0 auto; height: 2px;
+  pointer-events: none; border-radius: 1px; opacity: 0;
+  background: linear-gradient(90deg, transparent, #a7c69b, transparent) no-repeat;
+  background-size: 40% 100%; transition: opacity .18s ease;
+}
+#routeImporter[aria-busy="true"]::before {
+  opacity: .8; transition-delay: .18s;
+  animation: import-progress 1.6s ease-in-out infinite alternate;
+}
+@keyframes import-progress { from { background-position: left; } to { background-position: right; } }
+@media (prefers-reduced-motion: reduce) {
+  #routeImporter::before, #routeImporter[aria-busy="true"]::before { animation: none; transition: none; background-position: center; }
+}
 
 body:has(#emptyRoute:not([hidden])) > header,
 main:has(#emptyRoute:not([hidden])) .intro { display: none; }
