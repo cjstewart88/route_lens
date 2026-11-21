@@ -1,10 +1,11 @@
-import {classify} from './core.mjs?v=groups-2';
+import {classify, pointAt} from './core.mjs?v=georgia-1';
+import {readManifest, classifyGeorgia} from './georgia.mjs?v=1';
 
 const endpoint = 'https://overpass-api.de/api/interpreter';
 const geographicStep = .025;
 const padding = .004;
 const maxAreas = 64;
-const cacheSlot = 'routeLens.uploadedMakeup.v2';
+const cacheSlot = 'routeLens.uploadedMakeup.v3';
 const firstRetryMs = 5000;
 const maxBackoffMs = 60000;
 
@@ -37,7 +38,7 @@ function waitToRetry(ms, signal) {
   });
 }
 
-export function overpassQuery(route) {
+export function overpassQuery(route, starts) {
   if (route.distanceMeters > 250000) throw new Error('Route makeup is available for GPX files up to 250 km.');
   const middle = route.points[Math.floor(route.points.length / 2)];
   const scale = Math.max(.05, Math.cos(middle[0] * Math.PI / 180));
@@ -50,7 +51,13 @@ export function overpassQuery(route) {
     if (areas.size > maxAreas) throw new Error('This GPX covers too much area for one route makeup estimate.');
   }
 
-  for (const [index, [lat, lng]] of route.points.entries()) {
+  if (starts) {
+    for (const start of starts) {
+      const mid = (start + Math.min(start + 25, route.distanceMeters)) / 2;
+      const {lat, lng} = pointAt(route, mid);
+      addArea(lat, lng);
+    }
+  } else for (const [index, [lat, lng]] of route.points.entries()) {
     addArea(lat, lng);
     if (!index || route.segmentBreaks?.has(index)) continue;
     const [lastLat, lastLng] = route.points[index - 1];
@@ -90,12 +97,15 @@ async function fetchWays(query, signal) {
 }
 
 export async function lookupRouteMakeup(route, bytes, signal, onRetry) {
+  if (route.distanceMeters > 250000) throw new Error('Route makeup is available for GPX files up to 250 km.');
+  const manifest = await readManifest(route, signal);
   let key;
   try {
     const digest = await crypto.subtle.digest('SHA-256', bytes);
     key = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
     const cached = JSON.parse(localStorage.getItem(cacheSlot));
-    if (cached?.key === key && cached.result?.samples?.at(-1)?.end === route.distanceMeters) {
+    if (cached?.key === key && (!manifest || cached.version === manifest.version) &&
+        cached.result?.samples?.at(-1)?.end === route.distanceMeters) {
       return cached.result;
     }
   } catch {
@@ -103,14 +113,28 @@ export async function lookupRouteMakeup(route, bytes, signal, onRetry) {
   }
 
   signal.throwIfAborted();
-  const query = overpassQuery(route);
-  let data;
+  const regional = manifest ? await classifyGeorgia(route, manifest, signal) : null;
+  let samples = regional?.samples ?? [];
+  if (!regional || regional.outside.length) {
+    const starts = regional?.outside;
+    const query = overpassQuery(route, starts);
+    const data = await fetchWithRetry(query, signal, onRetry);
+    samples = samples.concat(classify(route, data, starts).samples);
+  }
+  samples.sort((a, b) => a.start - b.start);
+  const result = {samples};
+  if (key) {
+    try { localStorage.setItem(cacheSlot, JSON.stringify({key, version: manifest?.version, result})); } catch {}
+  }
+  return result;
+}
+
+async function fetchWithRetry(query, signal, onRetry) {
   let backoff = firstRetryMs;
   for (;;) {
     signal.throwIfAborted();
     try {
-      data = await fetchWays(query, signal);
-      break;
+      return await fetchWays(query, signal);
     } catch (error) {
       signal.throwIfAborted();
       if (!(error instanceof TemporaryLookupError)) throw error;
@@ -121,9 +145,4 @@ export async function lookupRouteMakeup(route, bytes, signal, onRetry) {
       onRetry?.(0);
     }
   }
-  const result = classify(route, data);
-  if (key) {
-    try { localStorage.setItem(cacheSlot, JSON.stringify({key, result})); } catch {}
-  }
-  return result;
 }
