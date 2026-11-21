@@ -1,10 +1,10 @@
-import {classify} from './core.mjs';
+import {classify} from './core.mjs?v=gravel-1';
 
 const endpoint = 'https://overpass-api.de/api/interpreter';
 const geographicStep = .025;
 const padding = .004;
 const maxAreas = 64;
-const cacheSlot = 'routeLens.uploadedMakeup.v1';
+const cacheSlot = 'routeLens.uploadedMakeup.v2';
 const firstRetryMs = 5000;
 const maxBackoffMs = 60000;
 
