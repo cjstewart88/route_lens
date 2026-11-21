@@ -35,7 +35,14 @@ def build(pbf, manifest, output):
             lat = (min(node.lat for node in nodes) + max(node.lat for node in nodes)) / 2
             lon = (min(node.lon for node in nodes) + max(node.lon for node in nodes)) / 2
         name = tags.get("name") or tags.get("brand") or ""
-        places.append([category, round(lat, 6), round(lon, 6), name])
+        street = tags.get("addr:full") or " ".join(filter(None, (
+            tags.get("addr:housenumber"), tags.get("addr:street"))))
+        address = ", ".join(filter(None, (
+            street, tags.get("addr:city"), tags.get("addr:postcode"))))
+        record = [category, round(lat, 6), round(lon, 6), name]
+        if address:
+            record.append(address)
+        places.append(record)
     data = {key: source[key] for key in ("version", "boundary", "source", "license", "attribution")}
     data["places"] = places
     Path(output).write_text(json.dumps(data, ensure_ascii=True, separators=(",", ":")), encoding="utf-8")

@@ -4,7 +4,7 @@ import {overpassQuery} from './makeup.mjs?v=places-1';
 
 const radius = MILE / 4;
 const names = {rail: 'Rail station', bike: 'Bike shop', fuel: 'Gas station'};
-const tileUrl = new URL('./georgia-places.json?v=rail-1', import.meta.url);
+const tileUrl = new URL('./georgia-places.json?v=address-1', import.meta.url);
 
 function routeMatches(route, places) {
   const mid = route.points[(route.points.length / 2) | 0][0];
@@ -14,7 +14,7 @@ function routeMatches(route, places) {
     [Math.min(west, x), Math.min(south, y), Math.max(east, x), Math.max(north, y)],
     [Infinity, Infinity, -Infinity, -Infinity]);
   const matches = [];
-  for (const [kind, lat, lon, name] of places) {
+  for (const [kind, lat, lon, name, address] of places) {
     const x = lon * lonScale, y = lat * 111195;
     if (x < bounds[0] - radius || x > bounds[2] + radius || y < bounds[1] - radius || y > bounds[3] + radius) continue;
     let distance = radius, meters;
@@ -28,7 +28,7 @@ function routeMatches(route, places) {
       distance = offset;
       meters = route.cumulative[i - 1] + t * (route.cumulative[i] - route.cumulative[i - 1]);
     }
-    if (meters !== undefined) matches.push({kind, lat, lon, name, distance, meters});
+    if (meters !== undefined) matches.push({kind, lat, lon, name, address, distance, meters});
   }
   matches.sort((a, b) => a.distance - b.distance);
   const unique = [];
@@ -73,7 +73,9 @@ async function loadPlaces(route, signal, showPartial) {
       const point = center ?? {lat, lon};
       if (!Number.isFinite(point.lat) || !Number.isFinite(point.lon)) return [];
       const kind = tags.shop === 'bicycle' ? 'bike' : tags.amenity === 'fuel' ? 'fuel' : 'rail';
-      return [[kind, point.lat, point.lon, tags.name || tags.brand || '']];
+      const street = tags['addr:full'] || [tags['addr:housenumber'], tags['addr:street']].filter(Boolean).join(' ');
+      const address = [street, tags['addr:city'], tags['addr:postcode']].filter(Boolean).join(', ');
+      return [[kind, point.lat, point.lon, tags.name || tags.brand || '', address]];
     });
     return {places: routeMatches(route, [...local, ...remote]), partial: false};
   } catch {
@@ -112,7 +114,12 @@ export function attachPlaces(map, route, signal, jumpTo) {
       title.textContent = label;
       const link = document.createElement('a');
       const mapsUrl = new URL('https://www.google.com/maps/search/');
-      mapsUrl.search = new URLSearchParams({api: '1', query: place.lat + ',' + place.lon});
+      const coordinates = place.lat + ',' + place.lon;
+      const searchableName = place.kind === 'rail' && place.name ? place.name + ' station' : place.name;
+      const query = searchableName
+        ? searchableName + (place.address ? ' ' + place.address : ' near ' + coordinates)
+        : place.address || coordinates;
+      mapsUrl.search = new URLSearchParams({api: '1', query});
       link.href = mapsUrl.href;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
