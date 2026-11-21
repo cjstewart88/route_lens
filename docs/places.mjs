@@ -105,6 +105,83 @@ async function loadPlaces(route, signal, showPartial) {
   }
 }
 
+function clusterStops(map, stops) {
+  const spacing = 46;
+  const cells = new Map();
+  const clusters = [];
+  for (const stop of stops) {
+    const point = map.project([stop.lat, stop.lon]);
+    const x = Math.floor(point.x / spacing);
+    const y = Math.floor(point.y / spacing);
+    let nearby;
+    let distance = spacing;
+    for (let col = x - 1; col <= x + 1; col++) {
+      for (let row = y - 1; row <= y + 1; row++) {
+        for (const cluster of cells.get(col + ',' + row) ?? []) {
+          const gap = point.distanceTo(cluster.anchor);
+          if (gap < distance) {
+            nearby = cluster;
+            distance = gap;
+          }
+        }
+      }
+    }
+    if (nearby) {
+      nearby.stops.push(stop);
+    } else {
+      const cluster = {anchor: point, stops: [stop]};
+      const key = x + ',' + y;
+      if (!cells.has(key)) cells.set(key, []);
+      cells.get(key).push(cluster);
+      clusters.push(cluster);
+    }
+  }
+  return clusters;
+}
+
+function stopDetail(place) {
+  return 'Mile ' + (place.meters / MILE).toFixed(1) + ' · ' +
+    (place.distance / MILE).toFixed(2) + ' mi from route';
+}
+
+function stopPopup(place) {
+  const popup = document.createElement('div');
+  popup.className = 'stop-card';
+  const category = document.createElement('span');
+  category.className = 'stop-category place-' + place.kind;
+  category.textContent = names[place.kind];
+  const title = document.createElement('strong');
+  title.textContent = place.name || names[place.kind];
+  popup.append(category, title);
+  if (place.address) {
+    const address = document.createElement('div');
+    address.className = 'stop-address';
+    address.textContent = place.address;
+    popup.append(address);
+  }
+  const footer = document.createElement('div');
+  footer.className = 'stop-footer';
+  const detail = document.createElement('span');
+  detail.textContent = stopDetail(place);
+  const link = document.createElement('a');
+  const mapsUrl = new URL('https://www.google.com/maps/search/');
+  const coordinates = place.lat + ',' + place.lon;
+  const searchableName = place.kind === 'rail' && place.name ? place.name + ' station' : place.name;
+  const query = searchableName
+    ? searchableName + (place.address ? ' ' + place.address : ' near ' + coordinates)
+    : place.address || coordinates;
+  mapsUrl.search = new URLSearchParams({api: '1', query});
+  link.href = mapsUrl.href;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.ariaLabel = 'Open in Google Maps';
+  link.title = link.ariaLabel;
+  link.textContent = '↗';
+  footer.append(detail, link);
+  popup.append(footer);
+  return popup;
+}
+
 export function attachPlaces(map, route, signal, jumpTo) {
   const panel = document.getElementById('routePlaces');
   const status = document.getElementById('placesStatus');
@@ -112,56 +189,92 @@ export function attachPlaces(map, route, signal, jumpTo) {
   const toggles = [...panel.querySelectorAll('input')];
   const markers = L.layerGroup().addTo(map);
   let places = [], loading = false, loaded = false, partial = false;
+  let shown = [], selectedStop;
+
+  function addPin(place) {
+    const label = place.name || names[place.kind];
+    const pin = L.marker([place.lat, place.lon], {
+      title: label,
+      alt: label,
+      icon: L.divIcon({className: 'place-marker place-' + place.kind,
+        html: {rail: 'R', bike: 'B', fuel: 'G'}[place.kind], iconSize: [24, 24], iconAnchor: [12, 12]}),
+    }).addTo(markers);
+    pin.bindPopup(() => stopPopup(place), {className: 'stop-popup', maxWidth: 270});
+    pin.on('click', () => jumpTo(place.meters));
+    return pin;
+  }
+
+  function openStop(place) {
+    selectedStop = place;
+    drawMarkers();
+    const pin = addPin(place);
+    map.panTo(pin.getLatLng());
+    jumpTo(place.meters);
+    pin.openPopup();
+  }
+
+  function stopButton(place) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'light';
+    button.textContent = (place.name || names[place.kind]) + ' · ' + stopDetail(place);
+    button.onclick = () => openStop(place);
+    return button;
+  }
+
+  function drawMarkers() {
+    markers.clearLayers();
+    for (const {stops} of clusterStops(map, shown.filter(place => place !== selectedStop))) {
+      if (stops.length === 1) {
+        addPin(stops[0]);
+        continue;
+      }
+      const bounds = L.latLngBounds(stops.map(place => [place.lat, place.lon]));
+      const size = stops.length >= 10 ? 38 : 32;
+      const label = stops.length + ' nearby stops';
+      const cluster = L.marker(bounds.getCenter(), {
+        title: label,
+        alt: label,
+        icon: L.divIcon({className: 'place-cluster', html: String(stops.length),
+          iconSize: [size, size], iconAnchor: [size / 2, size / 2]}),
+      }).addTo(markers);
+      cluster.on('click', () => {
+        const zoom = map.getZoom();
+        if (zoom < map.getMaxZoom()) {
+          map.setView(bounds.getCenter(), Math.min(map.getMaxZoom(),
+            Math.max(zoom + 1, map.getBoundsZoom(bounds, false, [80, 80]))));
+          return;
+        }
+        const choices = document.createElement('div');
+        choices.className = 'stop-cluster-list';
+        choices.append(...stops.map(stopButton));
+        L.popup({className: 'stop-popup', maxWidth: 270, maxHeight: 200})
+          .setLatLng(cluster.getLatLng()).setContent(choices).openOn(map);
+      });
+    }
+  }
+
   function render() {
     const enabled = new Set(toggles.filter(input => input.checked).map(input => input.value));
-    markers.clearLayers();
+    shown = places.filter(place => enabled.has(place.kind));
+    selectedStop = undefined;
+    drawMarkers();
     list.replaceChildren();
-    if (!enabled.size) { status.textContent = ''; return; }
-    const shown = places.filter(place => enabled.has(place.kind));
-    status.textContent = loading ? 'Looking for nearby stops…' : partial
+    status.textContent = !enabled.size ? '' : loading ? 'Looking for nearby stops…' : partial
       ? 'Live stop lookup unavailable. Showing cached results.'
       : shown.length ? '' : 'No selected stops within ¼ mile.';
     for (const place of shown) {
-      const label = place.name || names[place.kind];
-      const detail = 'Mile ' + (place.meters / MILE).toFixed(1) + ' · ' +
-        (place.distance / MILE).toFixed(2) + ' mi from route';
-      const pin = L.marker([place.lat, place.lon], {
-        title: label,
-        icon: L.divIcon({className: 'place-marker place-' + place.kind,
-          html: {rail: 'R', bike: 'B', fuel: 'G'}[place.kind], iconSize: [24, 24], iconAnchor: [12, 12]}),
-      }).addTo(markers);
-      const popup = document.createElement('div');
-      const title = document.createElement('strong');
-      title.textContent = label;
-      const link = document.createElement('a');
-      const mapsUrl = new URL('https://www.google.com/maps/search/');
-      const coordinates = place.lat + ',' + place.lon;
-      const searchableName = place.kind === 'rail' && place.name ? place.name + ' station' : place.name;
-      const query = searchableName
-        ? searchableName + (place.address ? ' ' + place.address : ' near ' + coordinates)
-        : place.address || coordinates;
-      mapsUrl.search = new URLSearchParams({api: '1', query});
-      link.href = mapsUrl.href;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      link.textContent = 'Open in Google Maps';
-      popup.append(title, document.createElement('br'), detail, document.createElement('br'), link);
-      pin.bindPopup(popup);
-      pin.on('click', () => jumpTo(place.meters));
       const item = document.createElement('li');
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'light';
-      button.textContent = label + ' · ' + detail;
-      button.onclick = () => {
-        jumpTo(place.meters);
-        map.panTo(pin.getLatLng());
-        pin.openPopup();
-      };
-      item.append(button);
+      item.append(stopButton(place));
       list.append(item);
     }
   }
+
+  function zoomMarkers() {
+    selectedStop = undefined;
+    drawMarkers();
+  }
+
   async function update() {
     if (!loaded && !loading && toggles.some(input => input.checked)) {
       loading = true;
@@ -180,6 +293,8 @@ export function attachPlaces(map, route, signal, jumpTo) {
     render();
   }
   for (const toggle of toggles) toggle.addEventListener('change', update, {signal});
+  map.on('zoomend', zoomMarkers);
+  signal.addEventListener('abort', () => map.off('zoomend', zoomMarkers), {once: true});
   panel.hidden = false;
   void update();
 }

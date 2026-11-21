@@ -99,3 +99,65 @@ h1, h2, h3, .ride-total output { font-family: inherit; }
 .scrub-controls .playback-button:hover { color: var(--ink); }
 .playback-icon { border-width: 6px 0 6px 10px; }
 .playback-button[data-playing=true] .playback-icon { width: 10px; height: 12px; border-inline-width: 3px; }
+
+.place-marker, .place-cluster {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.place-marker {
+  background: #17191b;
+  border: 1px solid currentColor;
+  color: var(--stop-color);
+  box-shadow: 0 0 0 3px #141414aa;
+}
+.place-rail { --stop-color: #a0ccdf; }
+.place-bike { --stop-color: #bbd394; }
+.place-fuel { --stop-color: #f1cd8d; }
+.place-cluster {
+  color: #f3f3f4;
+  background: #343638;
+  border: 1px solid #636669;
+  box-shadow: 0 0 0 4px #191a1bbd;
+}
+.place-marker:hover, .place-cluster:hover { background: #484a4d; }
+.stop-popup .leaflet-popup-content-wrapper,
+.stop-popup .leaflet-popup-tip {
+  background: #1b1d1f;
+  color: var(--ink);
+  border: 1px solid #55585b;
+}
+.stop-popup .leaflet-popup-content-wrapper { border-radius: var(--radius-panel); }
+.stop-popup .leaflet-popup-content { margin: 13px 14px 11px; font: 13px/1.4 system-ui, sans-serif; }
+.stop-popup a.leaflet-popup-close-button { color: var(--muted); }
+.stop-card { display: grid; gap: 5px; min-width: 170px; }
+.stop-card strong { font-size: 14px; overflow-wrap: anywhere; }
+.stop-category { color: var(--stop-color); font-size: 11px; padding-right: 16px; }
+.stop-address, .stop-footer { color: var(--muted); }
+.stop-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+}
+.stop-footer a {
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  height: 32px;
+  border: 1px solid #55585b;
+  border-radius: 50%;
+  color: var(--ink);
+  font-size: 16px;
+  text-decoration: none;
+}
+.stop-footer a:hover { background: #343638; }
+.stop-cluster-list { display: grid; gap: 5px; padding-right: 8px; }
+.stop-cluster-list button { text-align: left; font-size: 12px; }
