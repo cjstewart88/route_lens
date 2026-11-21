@@ -41,6 +41,8 @@ h1, h2, h3, .ride-total output { font-family: inherit; }
 .card h2, .intro #routeTitle { color: var(--ink); font-weight: 600; }
 .card h2 { font-size: 1.25rem; letter-spacing: -.035em; }
 .card { padding: clamp(14px, 2vw, 20px); }
+#routePlaces { padding-top: clamp(10px, 1.2vw, 14px); }
+#placesHeading { margin-top: 0; line-height: 1.25; }
 .card, .explorer { border-radius: var(--radius-panel); }
 .empty-route {
   width: min(100%, 39rem);
