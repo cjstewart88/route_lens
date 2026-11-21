@@ -391,23 +391,6 @@ function presentRoute(nextRoute, bytes, estimate) {
   message('');
 }
 
-async function loadDefaultRoute(request) {
-  try {
-    const [routeResponse, gpxResponse] = await Promise.all([fetch('route.json'), fetch('route.gpx')]);
-    if (!routeResponse.ok || !gpxResponse.ok) return;
-    const [defaultRoute, bytes] = await Promise.all([routeResponse.json(), gpxResponse.arrayBuffer()]);
-    let estimate;
-    try {
-      const response = await fetch('classification.json');
-      const data = response.ok ? await response.json() : null;
-      if (data?.routeId === defaultRoute.id && data.samples?.length) estimate = data;
-    } catch {}
-    if (request === routeRequest) presentRoute(defaultRoute, new Uint8Array(bytes), estimate);
-  } catch {
-    // The public version works without any bundled route files.
-  }
-}
-
 async function loadSharedRoute(request) {
   const params = new URLSearchParams(location.hash.slice(1));
   if (!params.has('gpx')) return false;
@@ -523,10 +506,12 @@ function initRouteControls() {
     chooseTripPosition(Number(event.target.value));
   };
   $('routePlayback').onclick = togglePlayback;
-  window.addEventListener('hashchange', () => loadSharedRoute(++routeRequest));
+  window.addEventListener('hashchange', () => {
+    if (!location.hash) location.reload();
+    else void loadSharedRoute(++routeRequest);
+  });
 }
 
 initRideTime();
 initRouteControls();
-const initialRequest = ++routeRequest;
-loadSharedRoute(initialRequest).then(shared => { if (!shared) loadDefaultRoute(initialRequest); });
+void loadSharedRoute(++routeRequest);
