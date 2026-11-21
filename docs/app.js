@@ -393,6 +393,18 @@ function presentRoute(nextRoute, bytes, estimate) {
 
 async function loadSharedRoute(request) {
   const params = new URLSearchParams(location.hash.slice(1));
+  if (params.has('rwgps')) {
+    try {
+      const id = params.get('rwgps');
+      if (!/^\d+$/.test(id)) throw new Error('This Ride with GPS route ID is invalid.');
+      message('Opening Ride with GPS route…');
+      const {bytes} = await importRideWithGps('https://ridewithgps.com/routes/' + id);
+      if (request === routeRequest) presentRoute({...parseGpx(bytes), rwgpsId: id}, bytes);
+    } catch (error) {
+      if (request === routeRequest) message(error.message);
+    }
+    return true;
+  }
   if (!params.has('gpx')) return false;
   try {
     const bytes = await decodeGpx(params.get('gpx'));
@@ -413,25 +425,29 @@ async function shareRoute() {
   field.hidden = true;
   button.disabled = true;
   try {
-    const encoded = await encodeGpx(file);
-    if (file !== currentGpx) return;
     const url = new URL(location.href);
-    const params = new URLSearchParams({gpx: encoded, name: sharedRoute.name});
-    if (sharedRoute.roundTrip !== false) params.set('round', '1');
-    url.hash = params.toString();
+    if (sharedRoute.rwgpsId) {
+      url.hash = new URLSearchParams({rwgps: sharedRoute.rwgpsId}).toString();
+    } else {
+      const encoded = await encodeGpx(file);
+      if (file !== currentGpx) return;
+      const params = new URLSearchParams({gpx: encoded, name: sharedRoute.name});
+      if (sharedRoute.roundTrip !== false) params.set('round', '1');
+      url.hash = params.toString();
+    }
     if (url.href.length > maxSharedUrlLength) {
       message('This GPX is too large for a link. Use Download GPX to share the file.');
       return;
     }
     try {
       await navigator.clipboard.writeText(url.href);
-      if (file === currentGpx) message('Share link copied. Anyone who can open the page and has the link can read this GPX.');
+      if (file === currentGpx) message(sharedRoute.rwgpsId ? 'Ride with GPS route link copied.' : 'Share link copied. Anyone who can open the page and has the link can read this GPX.');
     } catch {
       if (file !== currentGpx) return;
       field.value = url.href;
       field.hidden = false;
       field.select();
-      message('Copy the link below to share this GPX.');
+      message('Copy the link below to share this route.');
     }
   } catch {
     if (file === currentGpx) message('Could not create a share link. You can still use Download GPX.');
@@ -467,9 +483,10 @@ function initRouteControls() {
     status.textContent = 'Opening route…';
     $('openLink').disabled = true;
     try {
-      const bytes = await read(controller.signal);
+      const {bytes, rwgpsId} = await read(controller.signal);
       if (request !== routeRequest || controller.signal.aborted) return;
       const nextRoute = parseGpx(bytes, filename);
+      nextRoute.rwgpsId = rwgpsId;
       presentRoute(nextRoute, bytes);
       if (location.hash) history.replaceState(null, '', location.pathname + location.search);
       $('routeLink').value = '';
@@ -495,7 +512,7 @@ function initRouteControls() {
     if (!file) return;
     void openRoute(async () => {
       if (file.size > maxGpxBytes) throw new Error('Choose a GPX file under 5 MB.');
-      return new Uint8Array(await file.arrayBuffer());
+      return {bytes: new Uint8Array(await file.arrayBuffer())};
     }, file.name);
   };
   $('gpxShare').onclick = shareRoute;

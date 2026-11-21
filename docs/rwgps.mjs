@@ -16,7 +16,7 @@ export async function importRideWithGps(link, signal) {
     if (!response.ok) throw new Error();
     data = await response.json();
   } catch (error) {
-    if (signal.aborted) throw error;
+    if (signal?.aborted) throw error;
     throw new Error('Could not open this route. Check that the link opens while signed out, or upload a GPX file.');
   }
   const points = data?.track_points;
@@ -31,5 +31,6 @@ export async function importRideWithGps(link, signal) {
     const elevation = Number.isFinite(e) ? '<ele>' + e + '</ele>' : '';
     return '<trkpt lat="' + y + '" lon="' + x + '">' + elevation + '</trkpt>';
   }).join('');
-  return new TextEncoder().encode('<gpx xmlns="http://www.topografix.com/GPX/1/1" version="1.1" creator="Route Lens"><trk><name>' + name + '</name><trkseg>' + track + '</trkseg></trk></gpx>');
+  const bytes = new TextEncoder().encode('<gpx xmlns="http://www.topografix.com/GPX/1/1" version="1.1" creator="Route Lens"><trk><name>' + name + '</name><trkseg>' + track + '</trkseg></trk></gpx>');
+  return {bytes, rwgpsId: match[1]};
 }
