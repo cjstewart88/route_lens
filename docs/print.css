@@ -72,8 +72,8 @@ h1, h2, h3, .ride-total output { font-family: inherit; }
 .route-actions .route-action { background: transparent; }
 .light:focus-visible,a:focus-visible,input:focus-visible { outline: 2px solid #c9cad4; outline-offset: 3px; }
 
-.scrubber { padding: 5px clamp(10px, 2vw, 22px) 10px; }
-.scrub-controls { margin: 0; padding-top: 1.3rem; gap: clamp(4px, 1vw, 12px); }
+.scrubber { padding: 17px clamp(10px, 2vw, 22px); }
+.scrub-controls { margin: 0; padding: 0; align-items: center; gap: clamp(4px, 1vw, 12px); }
 .trip-track {
   flex: 1;
   min-width: 0;
