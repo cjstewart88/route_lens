@@ -44,6 +44,7 @@ main{padding-bottom:28px}.calculator #calcError:empty{display:none}
 .import-divider::before, .import-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 #importStatus:not(:empty) { margin-top: 1rem; color: var(--ink); }
 
+body:has(#emptyRoute:not([hidden])) > header,
 main:has(#emptyRoute:not([hidden])) .intro { display: none; }
 .empty-route {
   width: min(100%, 38rem);
