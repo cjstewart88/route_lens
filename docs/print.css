@@ -3,7 +3,7 @@
   --radius-panel: 8px;
   --radius-control: 5px;
   --bg: #121212;
-  --panel: #1c1c1d;
+  --panel: rgb(28 28 29 / 76%);
   --ink: #ededee;
   --muted: #ababaf;
   --line: #373739;
@@ -12,7 +12,8 @@
 }
 body {
   min-height: 100vh;
-  background: var(--bg) url("contours.png") repeat;
+  background-color: var(--bg);
+  background-image: linear-gradient(rgb(18 18 18 / 48%), rgb(18 18 18 / 48%)), url("contours.png");
   background-size: 640px 640px;
   font-family: system-ui, sans-serif;
 }
@@ -39,11 +40,12 @@ header {
 h1, h2, h3, .ride-total output { font-family: inherit; }
 .card h2, .intro #routeTitle { color: var(--ink); font-weight: 600; }
 .card h2 { font-size: 1.25rem; letter-spacing: -.035em; }
+.card { padding: clamp(14px, 2vw, 20px); }
 .card, .explorer { border-radius: var(--radius-panel); }
 .empty-route {
   width: min(100%, 39rem);
   margin: clamp(1rem,12vh,9rem) auto 2rem;
-  padding: clamp(1.4rem,4vw,2.75rem);
+  padding: clamp(1.1rem, 3vw, 1.8rem);
 }
 .empty-route h1 { font-size: clamp(2rem,5vw,2.65rem); font-weight: 600; letter-spacing: -.055em; }
 .empty-route .import-intro { max-width: 45ch; }
@@ -63,6 +65,7 @@ h1, h2, h3, .ride-total output { font-family: inherit; }
 .small,.map-credit,.estimate > span { color: var(--muted); }
 .composition-bar { border-radius: var(--radius-control); }
 .ride-total, #shareToast { border-radius: var(--radius-control); background: #262627; border-color: var(--line); }
+.ride-total { padding: 14px; background: rgb(38 38 39 / 75%); }
 #routeImporter::before { background-image: linear-gradient(90deg, transparent, #aaa, transparent); }
 .route-actions .route-action { background: transparent; }
 .light:focus-visible,a:focus-visible,input:focus-visible { outline: 2px solid #c9cad4; outline-offset: 3px; }
