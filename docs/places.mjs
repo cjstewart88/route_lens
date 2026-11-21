@@ -4,7 +4,7 @@ import {overpassQuery} from './makeup.mjs?v=places-1';
 
 const radius = MILE / 4;
 const names = {rail: 'Rail station', bike: 'Bike shop', fuel: 'Gas station'};
-const tileUrl = new URL('./georgia-places.json?v=address-1', import.meta.url);
+const tileUrl = new URL('./georgia-places.json?v=address-2', import.meta.url);
 
 function routeMatches(route, places) {
   const mid = route.points[(route.points.length / 2) | 0][0];

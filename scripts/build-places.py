@@ -39,6 +39,10 @@ def build(pbf, manifest, output):
             tags.get("addr:housenumber"), tags.get("addr:street"))))
         address = ", ".join(filter(None, (
             street, tags.get("addr:city"), tags.get("addr:postcode"))))
+        # The shop's current address is missing from this point in the extract.
+        # https://peachtreebikes.com/pages/contact
+        if not address and (name, round(lat, 6), round(lon, 6)) == ("Peachtree Bikes", 33.879616, -84.380261):
+            address = "4540 Roswell Rd, Sandy Springs, GA 30342"
         record = [category, round(lat, 6), round(lon, 6), name]
         if address:
             record.append(address)
