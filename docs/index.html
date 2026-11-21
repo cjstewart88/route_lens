@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#121212"><meta name="maps-embed-key" content=""><title>Route Lens</title><link rel="stylesheet" href="vendor/leaflet.css"><link rel="stylesheet" href="style.css?v=recents-1"><link rel="stylesheet" href="print.css?v=7"></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#121212"><meta name="maps-embed-key" content=""><title>Route Lens</title><link rel="stylesheet" href="vendor/leaflet.css"><link rel="stylesheet" href="style.css?v=recents-1"><link rel="stylesheet" href="print.css?v=8"></head>
 <body>
 <header><a class="brand" href="./"><span class="brand-icon">⌁</span> ROUTE LENS</a><button id="gpxUpload" type="button" class="light" aria-haspopup="dialog" hidden>Change route</button></header>
 <main>
@@ -49,7 +49,7 @@
   <div class="scrub-controls">
     <button type="button" id="routePlayback" class="light playback-button" aria-label="Play route" aria-controls="position" data-playing="false" disabled><span class="playback-icon" aria-hidden="true"></span></button>
     <div class="trip-track">
-      <span class="trip-position-label"><strong id="mile">0.00</strong> mi into trip</span>
+      <span class="trip-position-label">mile <strong id="mile">0.0</strong></span>
       <input id="position" type="range" min="0" max="1000" value="0" step="1" aria-label="Position along route">
     </div>
     <span id="remaining">…</span>
@@ -82,5 +82,5 @@
   </div>
   <p id="rideTimeSaveStatus" class="small" role="status" hidden></p>
 </article></section>
-</main><script src="vendor/leaflet.js"></script><script type="module" src="app.js?v=scrub-1"></script></body></html>
+</main><script src="vendor/leaflet.js"></script><script type="module" src="app.js?v=scrub-2"></script></body></html>
 
