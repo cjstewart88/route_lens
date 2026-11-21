@@ -125,3 +125,9 @@ header #gpxUpload { margin-left: auto; }
 .place-rail { background: #8ed1ed; }
 .place-bike { background: #badc93; }
 .place-fuel { background: #efc285; }
+
+#recentRoutes { margin-top: 1.5rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+#recentHeading { font-size: 1.1rem; letter-spacing: normal; }
+#recentList { display: grid; gap: .4rem; margin: 0; padding: 0; list-style: none; }
+#recentList button { width: 100%; text-align: left; overflow-wrap: anywhere; }
+#importDialog { max-height: calc(100% - 2rem); }

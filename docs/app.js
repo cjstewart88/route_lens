@@ -1,7 +1,8 @@
 import {parseGpx, encodeGpx, decodeGpx, maxGpxBytes, maxSharedUrlLength} from './gpx.mjs';
 import {lookupRouteMakeup} from './makeup.mjs?v=places-1';
 import {attachPlaces} from './places.mjs?v=4';
-import {importRideWithGps} from './rwgps.mjs';
+import {importRideWithGps, RouteUnavailableError} from './rwgps.mjs?v=recents-1';
+import {listRecentRoutes, readRecentFile, forgetRecentRoute, rememberRoute} from './recents.mjs';
 import {MILE,categories,pointAt,routeHeading,tripDistance,tripPosition,calculate,composition,sampleType} from './core.mjs?v=georgia-1';
 const $=id=>document.getElementById(id);let route,map,marker,line,selected=0,travelDirection=1,tripLeg="outbound",tripMeters=0,analysis,syncTimer,selectedView,directionAnchor=0,overrides={};
 const storageKey = kind => `routeLens.${kind}.${route.id}`;
@@ -438,6 +439,7 @@ function presentRoute(nextRoute, bytes, estimate) {
   choose(0);
   $('routePlayback').disabled = false;
   message('');
+  void rememberRoute(nextRoute, bytes).then(refreshRecents).catch(() => {});
 }
 
 function setImportBusy(busy) {
@@ -454,8 +456,8 @@ async function loadSharedRoute(request) {
     if (fromRwgps) {
       const id = params.get('rwgps');
       if (!/^\d+$/.test(id)) throw new Error('This Ride with GPS route ID is invalid.');
-      const {bytes} = await importRideWithGps('https://ridewithgps.com/routes/' + id);
-      if (request === routeRequest) presentRoute({...parseGpx(bytes), rwgpsId: id}, bytes);
+      const {bytes, rwgpsId, rwgpsLink} = await importRideWithGps('https://ridewithgps.com/routes/' + id);
+      if (request === routeRequest) presentRoute({...parseGpx(bytes), rwgpsId, rwgpsLink}, bytes);
       return;
     }
     const bytes = await decodeGpx(params.get('gpx'));
@@ -518,15 +520,43 @@ async function shareRoute() {
   }
 }
 
+const recentPageSize = 10;
+let recentLimit = recentPageSize;
+let openRecentRoute;
+let recentRefresh = 0;
+
+async function refreshRecents() {
+  const refresh = ++recentRefresh;
+  const entries = await listRecentRoutes().catch(() => []);
+  if (refresh !== recentRefresh) return;
+  $('recentRoutes').hidden = !entries.length;
+  $('recentMore').hidden = entries.length <= recentLimit;
+  const items = entries.slice(0, recentLimit).map(entry => {
+    const item = document.createElement('li');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'light';
+    button.textContent = entry.name;
+    button.onclick = () => openRecentRoute(entry);
+    item.append(button);
+    return item;
+  });
+  $('recentList').replaceChildren(...items);
+}
+
 function initRouteControls() {
   const input = $('gpxFile');
   const dialog = $('importDialog');
   const importer = $('routeImporter');
   const status = $('importStatus');
   let pending;
+  $('recentMore').onclick = () => {
+    recentLimit += recentPageSize;
+    void refreshRecents();
+  };
   $('gpxUpload').onclick = () => {
     pausePlayback();
-    dialog.append(importer);
+    dialog.append(importer, $('shareToast'));
     status.textContent = '';
     dialog.showModal();
     $('routeLink').focus();
@@ -535,9 +565,10 @@ function initRouteControls() {
   dialog.onclose = () => {
     pending?.abort();
     $('emptyRoute').append(importer);
+    document.querySelector('main').append($('shareToast'));
     $('gpxUpload').focus();
   };
-  async function openRoute(read, filename) {
+  async function openRoute(read, filename, entry) {
     pending?.abort();
     const controller = new AbortController();
     pending = controller;
@@ -547,17 +578,38 @@ function initRouteControls() {
     setImportBusy(true);
     $('openLink').disabled = true;
     try {
-      const {bytes, rwgpsId} = await read(controller.signal);
+      const {bytes, rwgpsId, rwgpsLink} = await read(controller.signal);
       if (request !== routeRequest || controller.signal.aborted) return;
-      const nextRoute = parseGpx(bytes, filename);
+      let nextRoute;
+      try {
+        nextRoute = parseGpx(bytes, filename);
+      } catch (error) {
+        if (entry) throw new RouteUnavailableError(error.message);
+        throw error;
+      }
       nextRoute.rwgpsId = rwgpsId;
+      nextRoute.rwgpsLink = rwgpsLink;
+      if (entry) nextRoute.roundTrip = entry.roundTrip;
       presentRoute(nextRoute, bytes);
       if (location.hash) history.replaceState(null, '', location.pathname + location.search);
       $('routeLink').value = '';
       status.textContent = '';
       if (dialog.open) dialog.close();
     } catch (error) {
-      if (request === routeRequest && !controller.signal.aborted) status.textContent = error.message || 'Could not open this route.';
+      if (request !== routeRequest || controller.signal.aborted) return;
+      if (entry && error instanceof RouteUnavailableError) {
+        try {
+          await forgetRecentRoute(entry.id);
+          void refreshRecents();
+          if (request === routeRequest && !controller.signal.aborted) showShareToast('Route unavailable. Removed from Recents.');
+        } catch {
+          if (request === routeRequest && !controller.signal.aborted) showShareToast('Route unavailable. Could not update Recents.');
+        }
+      } else if (entry) {
+        showShareToast('Could not open this route right now. Try again.');
+      } else {
+        status.textContent = error.message || 'Could not open this route.';
+      }
     } finally {
       if (pending === controller) {
         pending = null;
@@ -566,6 +618,13 @@ function initRouteControls() {
       }
     }
   }
+  openRecentRoute = entry => openRoute(async signal => {
+    if (entry.source) return importRideWithGps(entry.source, signal);
+    const bytes = await readRecentFile(entry.id);
+    if (!bytes) throw new RouteUnavailableError('The saved GPX is missing.');
+    return {bytes};
+  }, entry.name, entry);
+  void refreshRecents();
   $('linkForm').onsubmit = event => {
     event.preventDefault();
     void openRoute(signal => importRideWithGps($('routeLink').value, signal));

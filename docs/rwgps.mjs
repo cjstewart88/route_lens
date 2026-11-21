@@ -1,3 +1,5 @@
+export class RouteUnavailableError extends Error {}
+
 export async function importRideWithGps(link, signal) {
   const value = link.trim();
   let url;
@@ -13,24 +15,29 @@ export async function importRideWithGps(link, signal) {
   let data;
   try {
     const response = await fetch(endpoint, {signal, credentials: 'omit'});
+    if ([401, 403, 404, 410].includes(response.status)) {
+      throw new RouteUnavailableError('This Ride with GPS route is no longer available.');
+    }
     if (!response.ok) throw new Error();
     data = await response.json();
   } catch (error) {
-    if (signal?.aborted) throw error;
+    if (signal?.aborted || error instanceof RouteUnavailableError) throw error;
     throw new Error('Could not open this route. Check that the link opens while signed out, or upload a GPX file.');
   }
   const points = data?.track_points;
-  if (!Array.isArray(points) || points.length < 2) throw new Error('This route has no usable track. Try uploading its GPX file.');
-  if (points.length > 100000) throw new Error('This route exceeds the 100,000-point limit.');
+  if (!Array.isArray(points) || points.length < 2) throw new RouteUnavailableError('This route has no usable track. Try uploading its GPX file.');
+  if (points.length > 100000) throw new RouteUnavailableError('This route exceeds the 100,000-point limit.');
   const name = String(data.name || 'Ride with GPS route').slice(0, 180)
     .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
   const track = points.map(({x, y, e}) => {
     if (!Number.isFinite(x) || !Number.isFinite(y) || Math.abs(x) > 180 || Math.abs(y) > 90) {
-      throw new Error('This route contains invalid coordinates. Try uploading its GPX file.');
+      throw new RouteUnavailableError('This route contains invalid coordinates. Try uploading its GPX file.');
     }
     const elevation = Number.isFinite(e) ? '<ele>' + e + '</ele>' : '';
     return '<trkpt lat="' + y + '" lon="' + x + '">' + elevation + '</trkpt>';
   }).join('');
   const bytes = new TextEncoder().encode('<gpx xmlns="http://www.topografix.com/GPX/1/1" version="1.1" creator="Route Lens"><trk><name>' + name + '</name><trkseg>' + track + '</trkseg></trk></gpx>');
-  return {bytes, rwgpsId: match[1]};
+  const rwgpsLink = new URL('/routes/' + match[1], endpoint);
+  rwgpsLink.search = endpoint.search;
+  return {bytes, rwgpsId: match[1], rwgpsLink: rwgpsLink.href};
 }
