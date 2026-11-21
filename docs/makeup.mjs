@@ -1,5 +1,6 @@
 import {classify, pointAt} from './core.mjs?v=georgia-1';
-import {readManifest, classifyGeorgia} from './georgia.mjs?v=2';
+import {readManifest, classifyGeorgia} from './georgia.mjs?v=3';
+import {readNationalManifest, readStateManifests, classifyNational} from './national.mjs?v=1';
 
 const endpoint = 'https://overpass-api.de/api/interpreter';
 const geographicStep = .025;
@@ -98,13 +99,17 @@ async function fetchWays(query, signal) {
 
 export async function lookupRouteMakeup(route, bytes, signal, onRetry) {
   if (route.distanceMeters > 250000) throw new Error('Route makeup is available for GPX files up to 250 km.');
-  const manifest = await readManifest(route, signal);
+  const [national, states] = await Promise.all([
+    readNationalManifest(route, signal), readStateManifests(route, signal),
+  ]);
+  const manifest = national ?? await readManifest(route, signal);
+  const version = [...states, manifest].filter(Boolean).map(item => item.version).join('|');
   let key;
   try {
     const digest = await crypto.subtle.digest('SHA-256', bytes);
     key = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
     const cached = JSON.parse(localStorage.getItem(cacheSlot));
-    if (cached?.key === key && (!manifest || cached.version === manifest.version) &&
+    if (cached?.key === key && (!version || cached.version === version) &&
         cached.result?.samples?.at(-1)?.end === route.distanceMeters) {
       return cached.result;
     }
@@ -113,10 +118,23 @@ export async function lookupRouteMakeup(route, bytes, signal, onRetry) {
   }
 
   signal.throwIfAborted();
-  const regional = manifest ? await classifyGeorgia(route, manifest, signal) : null;
-  let samples = regional?.samples ?? [];
-  if (!regional || regional.outside.length) {
-    const starts = regional?.outside;
+  let samples = [], starts;
+  for (const snapshot of [...states, manifest].filter(Boolean)) {
+    if (starts?.length === 0) break;
+    const classifySnapshot = snapshot.ref ? classifyNational : classifyGeorgia;
+    const result = await classifySnapshot(route, snapshot, signal, starts);
+    samples = samples.concat(result.samples);
+    starts = result.outside;
+  }
+  if (national && starts?.length) {
+    const georgia = await readManifest(route, signal);
+    if (georgia) {
+      const result = await classifyGeorgia(route, georgia, signal, starts);
+      samples = samples.concat(result.samples);
+      starts = result.outside;
+    }
+  }
+  if (starts?.length !== 0) {
     const query = overpassQuery(route, starts);
     const data = await fetchWithRetry(query, signal, onRetry);
     samples = samples.concat(classify(route, data, starts).samples);
@@ -124,7 +142,7 @@ export async function lookupRouteMakeup(route, bytes, signal, onRetry) {
   samples.sort((a, b) => a.start - b.start);
   const result = {samples};
   if (key) {
-    try { localStorage.setItem(cacheSlot, JSON.stringify({key, version: manifest?.version, result})); } catch {}
+    try { localStorage.setItem(cacheSlot, JSON.stringify({key, version, result})); } catch {}
   }
   return result;
 }

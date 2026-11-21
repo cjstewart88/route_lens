@@ -16,7 +16,7 @@ function inRing(lat, lon, ring) {
   return inside;
 }
 
-export function insideGeorgia(lat, lon, polygons) {
+export function insideCoverage(lat, lon, polygons) {
   return polygons.some(([outer, ...holes]) =>
     inRing(lat, lon, outer) && !holes.some(hole => inRing(lat, lon, hole)));
 }
@@ -53,6 +53,10 @@ async function downloadTile(key, version, signal) {
   const records = bytes[0] === 31 && bytes[1] === 139
     ? await new Response(blob.stream().pipeThrough(new DecompressionStream('gzip'))).json()
     : JSON.parse(await blob.text());
+  return records;
+}
+
+function asWays(records) {
   return records.map(([id, highway, footway, surface, points]) => {
     const geometry = [];
     for (let i = 0; i < points.length; i += 2) {
@@ -62,13 +66,20 @@ async function downloadTile(key, version, signal) {
   });
 }
 
-export async function classifyGeorgia(route, manifest, signal) {
+export async function classifyGeorgia(route, manifest, signal, starts) {
+  return classifyTiles(route, manifest.polygons, (row, col) => {
+    const key = row + '_' + col;
+    return manifest.tiles.has(key) ? downloadTile(key, manifest.version, signal) : [];
+  }, signal, starts);
+}
+
+export async function classifyTiles(route, polygons, readTile, signal, starts = sampleStarts(route)) {
   const groups = new Map();
   const outside = [];
-  for (const start of sampleStarts(route)) {
+  for (const start of starts) {
     const end = Math.min(start + 25, route.distanceMeters);
     const {lat, lng} = pointAt(route, (start + end) / 2);
-    if (!insideGeorgia(lat, lng, manifest.polygons)) {
+    if (!insideCoverage(lat, lng, polygons)) {
       outside.push(start);
       continue;
     }
@@ -82,18 +93,15 @@ export async function classifyGeorgia(route, manifest, signal) {
   async function consume() {
     for (const [key, starts] of entries) {
       signal.throwIfAborted();
-      let elements = [];
-      if (manifest.tiles.has(key)) {
-        try {
-          elements = await downloadTile(key, manifest.version, signal);
-        } catch {
-          signal.throwIfAborted();
-          outside.push(...starts);
-          continue;
-        }
+      let records;
+      try {
+        records = await readTile(...key.split('_').map(Number));
+      } catch {
+        signal.throwIfAborted();
+        outside.push(...starts);
+        continue;
       }
-      // An unlisted tile inside the extract contains no mapped roads.
-      samples.push(...classify(route, {elements}, starts).samples);
+      samples.push(...classify(route, {elements: asWays(records)}, starts).samples);
     }
   }
   await Promise.all(Array.from({length: Math.min(groups.size, 4)}, consume));

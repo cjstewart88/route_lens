@@ -1,6 +1,7 @@
 import {MILE, pointAt} from './core.mjs?v=georgia-1';
-import {insideGeorgia} from './georgia.mjs?v=2';
-import {overpassQuery} from './makeup.mjs?v=places-1';
+import {insideCoverage} from './georgia.mjs?v=3';
+import {overpassQuery} from './makeup.mjs?v=us-1';
+import {readNationalManifest, readStateManifests, nationalPlaces} from './national.mjs?v=1';
 
 const radius = MILE / 4;
 const names = {rail: 'Rail station', bike: 'Bike shop', fuel: 'Gas station'};
@@ -48,22 +49,42 @@ async function loadPlaces(route, signal, showPartial) {
   } catch {
     signal.throwIfAborted();
   }
-  const local = data?.places ?? [];
+  let local = data?.places ?? [];
+  const states = await readStateManifests(route, signal);
   const geometry = data?.boundary;
   const polygons = geometry?.type === 'Polygon' ? [geometry.coordinates] : geometry?.coordinates;
-  const starts = [];
+  let starts;
   if (polygons) {
+    starts = [];
     for (let start = 0; start < route.distanceMeters; start += 25) {
       const {lat, lng} = pointAt(route, (start + Math.min(start + 25, route.distanceMeters)) / 2);
-      if (!insideGeorgia(lat, lng, polygons)) starts.push(start);
+      if (!insideCoverage(lat, lng, polygons)) starts.push(start);
     }
-    if (!starts.length) return {places: routeMatches(route, local), partial: false};
+    if (!starts.length && !states.length) return {places: routeMatches(route, local), partial: false};
   }
+  const national = await readNationalManifest(route, signal);
+  if (national) {
+    const result = await nationalPlaces(route, national, signal);
+    local = [...local, ...result.places.filter(([, lat, lon]) => !polygons || !insideCoverage(lat, lon, polygons))];
+    starts = result.outside;
+  }
+  for (const state of [...states].reverse()) {
+    const refreshed = await nationalPlaces(route, state, signal);
+    if (refreshed.incomplete) continue;
+    local = local.filter(([, lat, lon]) => !insideCoverage(lat, lon, state.polygons));
+    local.push(...refreshed.places.filter(([, lat, lon]) => insideCoverage(lat, lon, state.polygons)));
+    if (starts === undefined) starts = refreshed.outside;
+    else {
+      const remaining = new Set(refreshed.outside);
+      starts = starts.filter(start => remaining.has(start));
+    }
+  }
+  if (starts?.length === 0) return {places: routeMatches(route, local), partial: false};
   const localMatches = routeMatches(route, local);
   if (localMatches.length) showPartial(localMatches);
   try {
     const selectors = ['nwr[amenity=fuel]', 'nwr[shop=bicycle]', 'nwr[railway~"^(station|halt|tram_stop)$"][station!=funicular]'];
-    const query = overpassQuery(route, polygons ? starts : undefined, selectors, 'out center;', .006);
+    const query = overpassQuery(route, starts, selectors, 'out center;', .006);
     const url = 'https://overpass-api.de/api/interpreter?' + new URLSearchParams({data: query});
     const response = await fetch(url, {signal: AbortSignal.any([signal, AbortSignal.timeout(25000)]), credentials: 'omit', referrerPolicy: 'no-referrer'});
     if (!response.ok) throw new Error();
@@ -98,7 +119,7 @@ export function attachPlaces(map, route, signal, jumpTo) {
     if (!enabled.size) { status.textContent = ''; return; }
     const shown = places.filter(place => enabled.has(place.kind));
     status.textContent = loading ? 'Looking for nearby stops…' : partial
-      ? 'Live stop lookup unavailable. Showing saved Georgia results.'
+      ? 'Live stop lookup unavailable. Showing cached results.'
       : shown.length ? '' : 'No selected stops within ¼ mile.';
     for (const place of shown) {
       const label = place.name || names[place.kind];
