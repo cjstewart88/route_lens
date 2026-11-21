@@ -16,6 +16,11 @@ function inRing(lat, lon, ring) {
   return inside;
 }
 
+export function insideGeorgia(lat, lon, polygons) {
+  return polygons.some(([outer, ...holes]) =>
+    inRing(lat, lon, outer) && !holes.some(hole => inRing(lat, lon, hole)));
+}
+
 export async function readManifest(route, signal) {
   // Wider than the state. Avoid any regional request for distant routes.
   const lats = route.points.map(p => p[0]);
@@ -63,9 +68,7 @@ export async function classifyGeorgia(route, manifest, signal) {
   for (const start of sampleStarts(route)) {
     const end = Math.min(start + 25, route.distanceMeters);
     const {lat, lng} = pointAt(route, (start + end) / 2);
-    const inside = manifest.polygons.some(([outer, ...holes]) =>
-      inRing(lat, lng, outer) && !holes.some(hole => inRing(lat, lng, hole)));
-    if (!inside) {
+    if (!insideGeorgia(lat, lng, manifest.polygons)) {
       outside.push(start);
       continue;
     }

@@ -112,3 +112,16 @@ header #gpxUpload { margin-left: auto; }
   font-weight: 600;
   white-space: nowrap;
 }
+
+#routePlaces { margin-top: 1.25rem; }
+.place-toggles { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; }
+.place-toggles label { display: flex; gap: .35rem; align-items: center; }
+.place-toggles input { accent-color: #a7c69b; }
+#placesStatus:empty, #placesList:empty { display: none; }
+#placesStatus { margin-top: .75rem; }
+#placesList { display: flex; flex-wrap: wrap; gap: .4rem; max-height: 12rem; overflow: auto; list-style: none; padding: .25rem; margin: .75rem 0 0; }
+#placesList button { text-align: left; }
+.place-marker { display: grid; place-items: center; border: 2px solid #172427; border-radius: 50%; color: #172427; font-weight: 800; box-shadow: 0 1px 6px #0009; }
+.place-marta { background: #8ed1ed; }
+.place-bike { background: #badc93; }
+.place-fuel { background: #efc285; }

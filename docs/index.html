@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#131c1f"><title>Route Lens</title><link rel="stylesheet" href="vendor/leaflet.css"><link rel="stylesheet" href="style.css?v=route-header-1"></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#131c1f"><title>Route Lens</title><link rel="stylesheet" href="vendor/leaflet.css"><link rel="stylesheet" href="style.css?v=nearby-stops-1"></head>
 <body>
 <header><a class="brand" href="./"><span class="brand-icon">⌁</span> ROUTE LENS</a><span class="header-note">A closer look at your ride</span><button id="gpxUpload" type="button" class="light" aria-haspopup="dialog" hidden>Change route</button></header>
 <main>
@@ -42,7 +42,17 @@
 </div>
 <div class="scrubber"><div class="scrub-top"><strong><span id="mile">0.00</span> <span class="muted">mi into trip</span></strong><span id="remaining">…</span></div><div class="scrub-controls"><button type="button" id="routePlayback" class="light playback-button" aria-label="Play route" aria-controls="position" data-playing="false" disabled><span class="playback-icon" aria-hidden="true"></span></button><input id="position" type="range" min="0" max="1000" value="0" step="1" aria-label="Position along route"></div></div>
 </section>
-<section id="routeResults" class="lower" hidden><article class="card makeup"><h2>Route makeup</h2><p id="makeupNote" class="small" role="status" hidden></p><div id="compositionBar" class="composition-bar"></div><div id="compositionRows"></div><small class="map-credit">Road data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a></small>
+<section id="routePlaces" class="card" hidden aria-labelledby="placesHeading">
+  <h2 id="placesHeading">Stops near the route</h2>
+  <div class="place-toggles">
+    <label><input type="checkbox" value="marta"> MARTA rail</label>
+    <label><input type="checkbox" value="bike"> Bike shops</label>
+    <label><input type="checkbox" value="fuel"> Gas stations</label>
+  </div>
+  <p id="placesStatus" class="small" role="status"></p>
+  <ul id="placesList"></ul>
+</section>
+<section id="routeResults" class="lower" hidden><article class="card makeup"><h2>Route makeup</h2><p id="makeupNote" class="small" role="status" hidden></p><div id="compositionBar" class="composition-bar"></div><div id="compositionRows"></div><small class="map-credit">Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a></small>
 </article>
 <article class="card calculator">
   <h2>Estimated time</h2>
@@ -58,5 +68,5 @@
   </div>
   <p id="rideTimeSaveStatus" class="small" role="status" hidden></p>
 </article></section>
-</main><script src="vendor/leaflet.js"></script><script type="module" src="app.js?v=georgia-1"></script></body></html>
+</main><script src="vendor/leaflet.js"></script><script type="module" src="app.js?v=nearby-stops-1"></script></body></html>
 

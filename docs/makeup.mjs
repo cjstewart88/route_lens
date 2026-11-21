@@ -1,9 +1,8 @@
 import {classify, pointAt} from './core.mjs?v=georgia-1';
-import {readManifest, classifyGeorgia} from './georgia.mjs?v=1';
+import {readManifest, classifyGeorgia} from './georgia.mjs?v=2';
 
 const endpoint = 'https://overpass-api.de/api/interpreter';
 const geographicStep = .025;
-const padding = .004;
 const maxAreas = 64;
 const cacheSlot = 'routeLens.uploadedMakeup.v3';
 const firstRetryMs = 5000;
@@ -38,7 +37,7 @@ function waitToRetry(ms, signal) {
   });
 }
 
-export function overpassQuery(route, starts) {
+export function overpassQuery(route, starts, selectors = ['way[highway]'], output = 'out tags geom;', padding = .004) {
   if (route.distanceMeters > 250000) throw new Error('Route makeup is available for GPX files up to 250 km.');
   const middle = route.points[Math.floor(route.points.length / 2)];
   const scale = Math.max(.05, Math.cos(middle[0] * Math.PI / 180));
@@ -73,9 +72,10 @@ export function overpassQuery(route, starts) {
     const [row, col] = area.split(',').map(Number);
     const bounds = [row * geographicStep - padding, Math.max(-180, col * longitudeStep - padding / scale),
       (row + 1) * geographicStep + padding, Math.min(180, (col + 1) * longitudeStep + padding / scale)];
-    return 'way[highway](' + bounds.map(value => value.toFixed(5)).join(',') + ');';
+    const box = '(' + bounds.map(value => value.toFixed(5)).join(',') + ');';
+    return selectors.map(selector => selector + box).join('');
   });
-  return '[out:json][timeout:45];(' + ways.join('') + ');out tags geom;';
+  return '[out:json][timeout:45];(' + ways.join('') + ');' + output;
 }
 
 async function fetchWays(query, signal) {

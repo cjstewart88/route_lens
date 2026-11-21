@@ -1,5 +1,6 @@
 import {parseGpx, encodeGpx, decodeGpx, maxGpxBytes, maxSharedUrlLength} from './gpx.mjs';
-import {lookupRouteMakeup} from './makeup.mjs?v=georgia-1';
+import {lookupRouteMakeup} from './makeup.mjs?v=places-1';
+import {attachPlaces} from './places.mjs?v=1';
 import {importRideWithGps} from './rwgps.mjs';
 import {MILE,categories,pointAt,routeHeading,tripDistance,tripPosition,calculate,composition,sampleType} from './core.mjs?v=georgia-1';
 const $=id=>document.getElementById(id);let route,map,marker,line,selected=0,travelDirection=1,tripLeg="outbound",tripMeters=0,analysis,syncTimer,selectedView,directionAnchor=0,overrides={};
@@ -344,6 +345,7 @@ function drawRouteMap() {
   });
   map.on('mousemove', event => { if (draggingRoute) selectOnMap(event); });
   mapListeners = new AbortController();
+  attachPlaces(map, route, mapListeners.signal);
   document.addEventListener('mouseup', () => {
     if (!draggingRoute) return;
     draggingRoute = false;
