@@ -4,7 +4,7 @@
 <header><a class="brand" href="./"><span class="brand-icon">⌁</span> ROUTE LENS</a><span class="header-note">A closer look at your ride</span></header>
 <main>
 <section class="intro">
-  <div><div class="eyebrow">YOUR ROUTE, AT STREET LEVEL</div><h1><span id="routeTitle">Route Lens</span> <span id="routeDistance" class="route-distance"></span></h1></div>
+  <h1><span id="routeTitle"></span> <span id="routeDistance" class="route-distance"></span></h1>
   <div class="route-actions">
     <button id="gpxUpload" type="button" class="light" aria-haspopup="dialog" hidden>Change route</button>
     <button id="gpxShare" type="button" class="light" hidden>Copy share link</button>
@@ -13,7 +13,8 @@
 </section>
 <div id="gpxMessage" class="gpx-message" role="status" hidden></div>
 <input id="gpxShareUrl" class="gpx-share-url" type="url" aria-label="GPX share link" readonly hidden>
-<section id="emptyRoute" class="card empty-route"><h2>Open a route</h2>
+<section id="emptyRoute" class="card empty-route"><h1>Explore a route</h1>
+  <p class="import-intro">Preview the ride in Street View, check the route makeup, and estimate your riding time.</p>
   <div id="routeImporter">
     <form id="linkForm"><label for="routeLink">Ride with GPS route link</label>
       <div class="link-row"><input id="routeLink" type="text" inputmode="url" autocapitalize="none" spellcheck="false" placeholder="ridewithgps.com/routes/…" required><button class="light" id="openLink">Open route</button></div>

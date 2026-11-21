@@ -43,3 +43,24 @@ main{padding-bottom:28px}.calculator #calcError:empty{display:none}
 .import-divider { display: flex; align-items: center; gap: .75rem; color: var(--muted); margin: 1rem 0; font-size: .875rem; }
 .import-divider::before, .import-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 #importStatus:not(:empty) { margin-top: 1rem; color: var(--ink); }
+
+main:has(#emptyRoute:not([hidden])) .intro { display: none; }
+.empty-route {
+  width: min(100%, 38rem);
+  margin: clamp(1rem, 7vh, 5rem) auto 2rem;
+  padding: clamp(1.4rem, 5vw, 3rem);
+  background-image: radial-gradient(ellipse at top right, #32413980, transparent 58%);
+}
+.empty-route h1 { margin: 0; font-size: clamp(2rem, 5vw, 2.75rem); }
+.empty-route .import-intro { max-width: 43ch; margin-top: .65rem; }
+.empty-route #routeImporter { margin-top: 2rem; }
+.empty-route .link-row { align-items: stretch; }
+.empty-route #routeLink, .empty-route button { min-height: 2.85rem; }
+.empty-route #openLink { background: #bdd69f; border-color: #bdd69f; color: #18271e; }
+.empty-route #openLink:hover { background: #cde5b3; }
+.empty-route .import-divider { margin: 1.25rem 0; }
+.empty-route #chooseFile { width: 100%; }
+@media (max-width: 480px) {
+  .empty-route .link-row { flex-direction: column; }
+  .empty-route #routeLink { flex: auto; width: 100%; }
+}
