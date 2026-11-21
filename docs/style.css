@@ -89,9 +89,7 @@ header #gpxUpload { margin-left: auto; }
 #shareToast:empty { padding: 0; border: 0; box-shadow: none; }
 @media (max-width: 720px) { .map-panel { grid-row: 1; } .scrubber { grid-row: 2; } .street-panel { grid-row: 3; } }
 
-.route-actions .route-action { display: inline-grid; place-items: center; background: transparent; }
-.route-action > * { grid-area: 1 / 1; }
-.route-action .action-size { visibility: hidden; }
+.route-actions .route-action { display: inline-flex; align-items: center; justify-content: center; border: 0; background: transparent; }
 .route-action .action-content { display: inline-flex; align-items: center; gap: .4rem; }
 .route-action svg { width: 1.1rem; height: 1.1rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.route-actions .route-action:hover { border-color: #849d93; color: #e1efdf; }
+.route-actions .route-action:hover { color: #e1efdf; }
