@@ -65,3 +65,11 @@ main:has(#emptyRoute:not([hidden])) .intro { display: none; }
   .empty-route .link-row { flex-direction: column; }
   .empty-route #routeLink { flex: auto; width: 100%; }
 }
+
+header #gpxUpload { margin-left: auto; }
+.map-panel #fit { position: absolute; top: 10px; right: 10px; z-index: 1; box-shadow: 0 1px 5px #0006; }
+.ride-time-fields { grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); gap: .85rem; }
+.ride-time-fields > div { display: flex; flex-direction: column; justify-content: space-between; }
+#shareToast { position: fixed; z-index: 1500; left: 50%; bottom: max(1.25rem, env(safe-area-inset-bottom)); transform: translateX(-50%); width: max-content; max-width: calc(100% - 2rem); padding: .7rem 1rem; color: #edf5ef; background: #293c34; border: 1px solid #597460; border-radius: .65rem; box-shadow: 0 4px 18px #0005; pointer-events: none; }
+#shareToast:empty { padding: 0; border: 0; box-shadow: none; }
+@media (max-width: 720px) { .map-panel { grid-row: 1; } .scrubber { grid-row: 2; } .street-panel { grid-row: 3; } }

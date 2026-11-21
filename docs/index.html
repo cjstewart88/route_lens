@@ -1,16 +1,17 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#131c1f"><title>Route Lens</title><link rel="stylesheet" href="vendor/leaflet.css"><link rel="stylesheet" href="style.css?v=bd376a7"></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#131c1f"><title>Route Lens</title><link rel="stylesheet" href="vendor/leaflet.css"><link rel="stylesheet" href="style.css?v=route-controls-1"></head>
 <body>
-<header><a class="brand" href="./"><span class="brand-icon">⌁</span> ROUTE LENS</a><span class="header-note">A closer look at your ride</span></header>
+<header><a class="brand" href="./"><span class="brand-icon">⌁</span> ROUTE LENS</a><span class="header-note">A closer look at your ride</span><button id="gpxUpload" type="button" class="light" aria-haspopup="dialog" hidden>Change route</button></header>
 <main>
 <section class="intro">
   <h1><span id="routeTitle"></span> <span id="routeDistance" class="route-distance"></span></h1>
   <div class="route-actions">
-    <button id="gpxUpload" type="button" class="light" aria-haspopup="dialog" hidden>Change route</button>
+
     <button id="gpxShare" type="button" class="light" hidden>Copy share link</button>
     <a id="gpxDownload" class="light" download hidden>Download GPX</a>
   </div>
 </section>
+<div id="shareToast" role="status" aria-live="polite"></div>
 <div id="gpxMessage" class="gpx-message" role="status" hidden></div>
 <input id="gpxShareUrl" class="gpx-share-url" type="url" aria-label="GPX share link" readonly hidden>
 <section id="emptyRoute" class="card empty-route"><h1>Route Lens</h1>
@@ -29,22 +30,22 @@
   <div class="dialog-heading"><h2 id="importHeading">Change route</h2><button id="closeImport" class="light" type="button" aria-label="Close">×</button></div>
 </dialog>
 <section id="routeExplorer" class="explorer" hidden>
-<div class="panel-heading explorer-heading"><h2 class="eyebrow">EXPLORE THE ROUTE</h2><button id="fit" class="light">Fit route</button></div>
-<div class="map-panel"><div id="map" aria-label="Interactive route map"><div class="loading">Loading your route…</div></div></div>
+
+<div class="map-panel"><div id="map" aria-label="Interactive route map"><div class="loading">Loading your route…</div></div><button id="fit" type="button" class="light">Fit route</button></div>
 <div class="street-panel">
 <div class="inline-viewer" id="streetViewer" data-loading="true" data-ready="false"><div id="viewerLoading" class="viewer-loading" role="status">Loading Street View…</div><iframe id="streetFrame" title="Street View at selected route position" allow="fullscreen; accelerometer 'none'; gyroscope 'none'" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
 </div>
 <div class="scrubber"><div class="scrub-top"><strong><span id="mile">0.00</span> <span class="muted">mi into trip</span></strong><span id="remaining">…</span></div><div class="scrub-controls"><button type="button" id="routePlayback" class="light playback-button" aria-label="Play route" aria-controls="position" data-playing="false" disabled><span class="playback-icon" aria-hidden="true"></span></button><input id="position" type="range" min="0" max="1000" value="0" step="1" aria-label="Position along route"></div></div>
 </section>
-<section id="routeResults" class="lower" hidden><article class="card makeup"><div class="eyebrow">WHAT YOU’LL RIDE ON</div><h2>Route makeup</h2><p id="makeupNote" class="small" role="status" hidden></p><div id="compositionBar" class="composition-bar"></div><div id="compositionRows"></div>
+<section id="routeResults" class="lower" hidden><article class="card makeup"><h2>Route makeup</h2><p id="makeupNote" class="small" role="status" hidden></p><div id="compositionBar" class="composition-bar"></div><div id="compositionRows"></div>
 </article>
 <article class="card calculator">
   <h2>Estimated time</h2>
   <div class="ride-time-fields">
-    <label for="avgSpeed">Average moving speed <span>mph</span></label>
+    <div><label for="avgSpeed">Average moving speed <span>mph</span></label>
     <input id="avgSpeed" type="number" min="0" step="any" inputmode="decimal">
-    <label for="stopTime">Estimated stop time <span>min</span></label>
-    <input id="stopTime" type="number" min="0" step="any" inputmode="decimal">
+    </div><div><label for="stopTime">Estimated stop time <span>min</span></label>
+    <input id="stopTime" type="number" min="0" step="any" inputmode="decimal"></div>
   </div>
   <div class="estimate ride-total">
     <span id="rideTimeLabel">Estimated round-trip time</span>
@@ -52,5 +53,5 @@
   </div>
   <p id="rideTimeSaveStatus" class="small" role="status" hidden></p>
 </article></section>
-</main><script src="vendor/leaflet.js"></script><script type="module" src="app.js"></script></body></html>
+</main><script src="vendor/leaflet.js"></script><script type="module" src="app.js?v=route-controls-1"></script></body></html>
 

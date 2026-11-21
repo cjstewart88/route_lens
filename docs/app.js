@@ -343,6 +343,7 @@ async function analyzeMakeup() {
 }
 
 function presentRoute(nextRoute, bytes, estimate) {
+  showShareToast('');
   makeupRequest?.abort();
   resetViewer();
   mapListeners?.abort();
@@ -417,7 +418,17 @@ async function loadSharedRoute(request) {
   return true;
 }
 
+let shareToastTimer;
+function showShareToast(text) {
+  clearTimeout(shareToastTimer);
+  const toast = $('shareToast');
+  toast.textContent = text;
+  if (text) shareToastTimer = setTimeout(() => { toast.textContent = ''; }, 4500);
+}
+
 async function shareRoute() {
+  message('');
+  showShareToast('');
   const file = currentGpx;
   const sharedRoute = route;
   const button = $('gpxShare');
@@ -436,12 +447,12 @@ async function shareRoute() {
       url.hash = params.toString();
     }
     if (url.href.length > maxSharedUrlLength) {
-      message('This GPX is too large for a link. Use Download GPX to share the file.');
+      showShareToast('This GPX is too large for a link. Use Download GPX to share the file.');
       return;
     }
     try {
       await navigator.clipboard.writeText(url.href);
-      if (file === currentGpx) message(sharedRoute.rwgpsId ? 'Ride with GPS route link copied.' : 'Share link copied. Anyone who can open the page and has the link can read this GPX.');
+      if (file === currentGpx) showShareToast('Share link copied.');
     } catch {
       if (file !== currentGpx) return;
       field.value = url.href;
@@ -450,7 +461,7 @@ async function shareRoute() {
       message('Copy the link below to share this route.');
     }
   } catch {
-    if (file === currentGpx) message('Could not create a share link. You can still use Download GPX.');
+    if (file === currentGpx) showShareToast('Could not create a share link. You can still use Download GPX.');
   } finally {
     button.disabled = false;
   }
