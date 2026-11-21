@@ -3,8 +3,8 @@ import {insideGeorgia} from './georgia.mjs?v=2';
 import {overpassQuery} from './makeup.mjs?v=places-1';
 
 const radius = MILE / 4;
-const names = {marta: 'MARTA station', bike: 'Bike shop', fuel: 'Gas station'};
-const tileUrl = new URL('./georgia-places.json?v=20261119', import.meta.url);
+const names = {rail: 'Rail station', bike: 'Bike shop', fuel: 'Gas station'};
+const tileUrl = new URL('./georgia-places.json?v=rail-1', import.meta.url);
 
 function routeMatches(route, places) {
   const mid = route.points[(route.points.length / 2) | 0][0];
@@ -62,8 +62,7 @@ async function loadPlaces(route, signal, showPartial) {
   const localMatches = routeMatches(route, local);
   if (localMatches.length) showPartial(localMatches);
   try {
-    const selectors = ['nwr[amenity=fuel]', 'nwr[shop=bicycle]'];
-    if (!data) selectors.push('nwr[railway=station][station=subway][network=MARTA]');
+    const selectors = ['nwr[amenity=fuel]', 'nwr[shop=bicycle]', 'nwr[railway~"^(station|halt|tram_stop)$"][station!=funicular]'];
     const query = overpassQuery(route, polygons ? starts : undefined, selectors, 'out center;', .006);
     const url = 'https://overpass-api.de/api/interpreter?' + new URLSearchParams({data: query});
     const response = await fetch(url, {signal: AbortSignal.any([signal, AbortSignal.timeout(25000)]), credentials: 'omit', referrerPolicy: 'no-referrer'});
@@ -73,7 +72,7 @@ async function loadPlaces(route, signal, showPartial) {
     const remote = result.elements.flatMap(({center, lat, lon, tags = {}}) => {
       const point = center ?? {lat, lon};
       if (!Number.isFinite(point.lat) || !Number.isFinite(point.lon)) return [];
-      const kind = tags.shop === 'bicycle' ? 'bike' : tags.amenity === 'fuel' ? 'fuel' : 'marta';
+      const kind = tags.shop === 'bicycle' ? 'bike' : tags.amenity === 'fuel' ? 'fuel' : 'rail';
       return [[kind, point.lat, point.lon, tags.name || tags.brand || '']];
     });
     return {places: routeMatches(route, [...local, ...remote]), partial: false};
@@ -83,7 +82,7 @@ async function loadPlaces(route, signal, showPartial) {
   }
 }
 
-export function attachPlaces(map, route, signal) {
+export function attachPlaces(map, route, signal, jumpTo) {
   const panel = document.getElementById('routePlaces');
   const status = document.getElementById('placesStatus');
   const list = document.getElementById('placesList');
@@ -106,19 +105,31 @@ export function attachPlaces(map, route, signal) {
       const pin = L.marker([place.lat, place.lon], {
         title: label,
         icon: L.divIcon({className: 'place-marker place-' + place.kind,
-          html: {marta: 'M', bike: 'B', fuel: 'G'}[place.kind], iconSize: [24, 24], iconAnchor: [12, 12]}),
+          html: {rail: 'R', bike: 'B', fuel: 'G'}[place.kind], iconSize: [24, 24], iconAnchor: [12, 12]}),
       }).addTo(markers);
       const popup = document.createElement('div');
       const title = document.createElement('strong');
       title.textContent = label;
-      popup.append(title, document.createElement('br'), detail);
+      const link = document.createElement('a');
+      const mapsUrl = new URL('https://www.google.com/maps/search/');
+      mapsUrl.search = new URLSearchParams({api: '1', query: place.lat + ',' + place.lon});
+      link.href = mapsUrl.href;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = 'Open in Google Maps';
+      popup.append(title, document.createElement('br'), detail, document.createElement('br'), link);
       pin.bindPopup(popup);
+      pin.on('click', () => jumpTo(place.meters));
       const item = document.createElement('li');
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'light';
       button.textContent = label + ' · ' + detail;
-      button.onclick = () => { map.panTo(pin.getLatLng()); pin.openPopup(); };
+      button.onclick = () => {
+        jumpTo(place.meters);
+        map.panTo(pin.getLatLng());
+        pin.openPopup();
+      };
       item.append(button);
       list.append(item);
     }

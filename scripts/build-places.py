@@ -7,8 +7,8 @@ import osmium
 
 
 def kind(tags):
-    if tags.get("railway") == "station" and tags.get("station") == "subway" and tags.get("network") == "MARTA":
-        return "marta"
+    if tags.get("railway") in {"station", "halt", "tram_stop"} and tags.get("station") != "funicular":
+        return "rail"
     if tags.get("shop") == "bicycle":
         return "bike"
     if tags.get("amenity") == "fuel":
