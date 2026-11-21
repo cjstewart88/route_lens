@@ -5,6 +5,37 @@ const geographicStep = .025;
 const padding = .004;
 const maxAreas = 64;
 const cacheSlot = 'routeLens.uploadedMakeup.v1';
+const firstRetryMs = 5000;
+const maxBackoffMs = 60000;
+
+class TemporaryLookupError extends Error {
+  constructor(retryAfterMs = 0) {
+    super('OpenStreetMap couldn’t complete the lookup.');
+    this.retryAfterMs = retryAfterMs;
+  }
+}
+
+function retryAfterMs(value) {
+  if (!value) return 0;
+  const seconds = Number(value);
+  const delay = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(value) - Date.now();
+  return Number.isFinite(delay) ? Math.max(0, Math.min(delay, 2147483647)) : 0;
+}
+
+function waitToRetry(ms, signal) {
+  signal.throwIfAborted();
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', cancel);
+      resolve();
+    }, ms);
+    function cancel() {
+      clearTimeout(timer);
+      reject(signal.reason);
+    }
+    signal.addEventListener('abort', cancel, {once: true});
+  });
+}
 
 export function overpassQuery(route) {
   if (route.distanceMeters > 250000) throw new Error('Route makeup is available for GPX files up to 250 km.');
@@ -40,7 +71,25 @@ export function overpassQuery(route) {
   return '[out:json][timeout:45];(' + ways.join('') + ');out tags geom;';
 }
 
-export async function lookupRouteMakeup(route, bytes, signal) {
+async function fetchWays(query, signal) {
+  let response;
+  try {
+    response = await fetch(endpoint + '?' + new URLSearchParams({data: query}), {
+      credentials: 'omit', referrerPolicy: 'no-referrer',
+      signal: AbortSignal.any([signal, AbortSignal.timeout(55000)]),
+    });
+  } catch {
+    signal.throwIfAborted();
+    throw new TemporaryLookupError();
+  }
+  if (!response.ok) throw new TemporaryLookupError(retryAfterMs(response.headers.get('Retry-After')));
+  const data = await response.json().catch(() => null);
+  signal.throwIfAborted();
+  if (data?.remark || !Array.isArray(data?.elements)) throw new TemporaryLookupError();
+  return data;
+}
+
+export async function lookupRouteMakeup(route, bytes, signal, onRetry) {
   let key;
   try {
     const digest = await crypto.subtle.digest('SHA-256', bytes);
@@ -53,20 +102,25 @@ export async function lookupRouteMakeup(route, bytes, signal) {
     // The estimate can still run without browser storage.
   }
 
-  const query = overpassQuery(route);
-  let response;
-  try {
-    response = await fetch(endpoint + '?' + new URLSearchParams({data: query}), {
-      credentials: 'omit', referrerPolicy: 'no-referrer',
-      signal: AbortSignal.any([signal, AbortSignal.timeout(55000)]),
-    });
-  } catch {
-    throw new Error('OpenStreetMap is taking too long or couldn’t be reached. Try again.');
-  }
-  if (!response.ok) throw new Error('OpenStreetMap is busy or unavailable. Try again.');
-  const data = await response.json().catch(() => null);
-  if (data?.remark || !Array.isArray(data?.elements)) throw new Error('OpenStreetMap couldn’t complete the estimate. Try again.');
   signal.throwIfAborted();
+  const query = overpassQuery(route);
+  let data;
+  let backoff = firstRetryMs;
+  for (;;) {
+    signal.throwIfAborted();
+    try {
+      data = await fetchWays(query, signal);
+      break;
+    } catch (error) {
+      signal.throwIfAborted();
+      if (!(error instanceof TemporaryLookupError)) throw error;
+      const delay = Math.max(backoff, error.retryAfterMs);
+      onRetry?.(delay);
+      await waitToRetry(delay, signal);
+      backoff = Math.min(maxBackoffMs, backoff * 2);
+      onRetry?.(0);
+    }
+  }
   const result = classify(route, data);
   if (key) {
     try { localStorage.setItem(cacheSlot, JSON.stringify({key, result})); } catch {}

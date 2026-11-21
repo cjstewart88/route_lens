@@ -309,11 +309,10 @@ function drawRouteMap() {
   $('fit').onclick = fitRoute;
 }
 
-function setMakeupStatus(text, retry = false) {
+function setMakeupStatus(text) {
   const note = $('makeupNote');
   note.textContent = text;
   note.hidden = !text;
-  $('makeupRetry').hidden = !retry;
 }
 
 async function analyzeMakeup() {
@@ -323,7 +322,13 @@ async function analyzeMakeup() {
   makeupRequest = request;
   setMakeupStatus('Checking nearby roads and paths…');
   try {
-    const estimate = await lookupRouteMakeup(currentRoute, currentGpx, request.signal);
+    const estimate = await lookupRouteMakeup(currentRoute, currentGpx, request.signal, delay => {
+      if (!request.signal.aborted) {
+        setMakeupStatus(delay
+          ? 'Map lookup unavailable. Retrying in ' + Math.ceil(delay / 1000) + ' seconds…'
+          : 'Checking nearby roads and paths again…');
+      }
+    });
     if (request.signal.aborted) return;
     analysis = estimate;
     $('compositionBar').hidden = false;
@@ -332,7 +337,7 @@ async function analyzeMakeup() {
     setMakeupStatus('');
   } catch (error) {
     if (request.signal.aborted) return;
-    setMakeupStatus(error.message, error.message.includes('Try again'));
+    setMakeupStatus(error.message);
   }
 }
 
@@ -471,7 +476,6 @@ function initRouteControls() {
     }
   };
   $('gpxShare').onclick = shareRoute;
-  $('makeupRetry').onclick = analyzeMakeup;
   const slider = $('position');
   slider.addEventListener('pointerdown', pausePlayback);
   slider.oninput = event => {
