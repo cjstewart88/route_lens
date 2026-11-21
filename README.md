@@ -1,5 +1,7 @@
 # Route Lens
 
+[Open Route Lens on GitHub Pages](https://cjstewart88.github.io/route_lens/)
+
 A browser-based GPX viewer with an interactive map, Street View, route playback, and a ride-time estimate. Open a `.gpx` file with **Upload GPX**. The route follows the file as recorded, including separate track segments. Route Lens estimates makeup in the browser from static Georgia road tiles. It requests nearby roads from Overpass for stretches outside the extract or with unavailable tiles. Unmatched stretches are shown as unknown.
 
 For Ride with GPS imports, **Copy share link** shares the route ID. Opening the link fetches the current public route from Ride with GPS. For file uploads, **Copy share link** puts the gzip-compressed GPX in the URL fragment. Anyone who receives the full link can decode the original file, including its metadata. The file is processed in the browser. Map tiles and Street View still load from their respective providers. For long files or services that truncate links, send the original using **Download GPX**.
