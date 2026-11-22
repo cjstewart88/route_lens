@@ -206,7 +206,10 @@ export function attachPlaces(map, route, signal, jumpTo) {
   function openStop(place) {
     const position = [place.lat, place.lon];
     const zoom = Math.min(map.getMaxZoom(), map.getZoom() + 1);
-    map.setView(position, zoom, {animate: false});
+    if (!map.getBounds().contains(position)) {
+      map.panInside(position, {padding: [20, 20], animate: false});
+    }
+    map.setZoomAround(L.latLng(position), zoom, {animate: false});
     selectedStop = place;
     drawMarkers();
     const pin = addPin(place);
