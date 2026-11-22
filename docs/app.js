@@ -333,7 +333,7 @@ function drawRouteMap() {
   }
   const container = $('map');
   container.replaceChildren();
-  map = L.map(container, {scrollWheelZoom: true, zoomSnap: .25});
+  map = L.map(container, {scrollWheelZoom: true, zoomSnap: .25, closePopupOnClick: false});
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -358,9 +358,20 @@ function drawRouteMap() {
   marker.on('dragstart', pausePlayback);
   marker.on('drag', event => choose(nearest(event.target.getLatLng()), false, null, true));
   marker.on('dragend', () => choose(selected));
-  map.on('click', event => { pausePlayback(); selectOnMap(event); });
+  let popupOpen = false;
+  map.on('popupopen', () => { popupOpen = true; });
+  map.on('popupclose', () => { popupOpen = false; });
+  map.on('click', event => {
+    if (popupOpen) {
+      map.closePopup();
+      return;
+    }
+    pausePlayback();
+    selectOnMap(event);
+  });
   let draggingRoute = false;
   routeHitLine.on('mousedown', event => {
+    if (popupOpen) return;
     pausePlayback();
     draggingRoute = true;
     map.dragging.disable();
