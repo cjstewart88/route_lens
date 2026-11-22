@@ -4,6 +4,10 @@ import {attachPlaces} from './places.mjs?v=14';
 import {importRideWithGps, RouteUnavailableError} from './rwgps.mjs?v=recents-1';
 import {listRecentRoutes, readRecentFile, forgetRecentRoute, rememberRoute} from './recents.mjs';
 import {MILE,categories,pointAt,routeHeading,tripDistance,tripPosition,calculate,composition,sampleType} from './core.mjs?v=georgia-1';
+if (new URLSearchParams(location.search).get('layout') === 'map') {
+  await import('./map-layout.mjs?v=1');
+}
+
 const $=id=>document.getElementById(id);let route,map,marker,line,selected=0,travelDirection=1,tripLeg="outbound",tripMeters=0,analysis,syncTimer,selectedView,directionAnchor=0,overrides={};
 const storageKey = kind => `routeLens.${kind}.${route.id}`;
 const embedKey = document.querySelector('meta[name="maps-embed-key"]').content.trim();
