@@ -182,7 +182,7 @@ function stopPopup(place) {
   return popup;
 }
 
-export function attachPlaces(map, route, signal, jumpTo) {
+export function attachPlaces(map, route, signal, pausePlayback) {
   const panel = document.getElementById('routePlaces');
   const status = document.getElementById('placesStatus');
   const list = document.getElementById('placesList');
@@ -213,7 +213,7 @@ export function attachPlaces(map, route, signal, jumpTo) {
     selectedStop = place;
     drawMarkers();
     const pin = addPin(place);
-    jumpTo(place.meters);
+    pausePlayback();
     const popup = L.popup({
       className: 'stop-popup', maxWidth: 270, offset: [0, -22], autoPan: false,
     }, pin);
