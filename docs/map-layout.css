@@ -41,7 +41,7 @@
 .map-layout .leaflet-top, .map-layout #fit { top: 65px; }
 .map-layout .leaflet-bottom { bottom: 69px; }
 .map-layout .scrubber { inset: auto 12px 12px; padding-block: 6px; }
-.map-layout .map-overlay { bottom: 84px; max-width: calc(100vw - 24px); }
+.map-layout .map-overlay { bottom: 84px; padding: 0; max-width: calc(100vw - 24px); }
 .map-layout .map-overlay summary { padding: 8px 12px; font-size: 13px; }
 .map-layout .map-overlay-street { right: 12px; width: min(350px, 45vw); }
 .map-layout .street-panel { border: 0; }

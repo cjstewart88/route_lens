@@ -346,7 +346,9 @@ function drawRouteMap() {
   const starts = route.segmentStarts ?? [0];
   const segments = starts.map((start, i) => coordinates.slice(start, starts[i + 1] ?? coordinates.length));
   const bounds = L.latLngBounds(coordinates);
-  const fitRoute = () => map.fitBounds(bounds, {padding: [35, 30]});
+  const fitRoute = () => map.fitBounds(bounds, container.closest('.map-layout')
+    ? {paddingTopLeft: [35, 88], paddingBottomRight: [35, 98]}
+    : {padding: [35, 30]});
   fitRoute();
   line = L.layerGroup().addTo(map);
   routeHitLine = L.polyline(segments, {color: categories.unknown.color, weight: 6, opacity: .95}).addTo(map);
