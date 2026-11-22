@@ -206,13 +206,13 @@ export function attachPlaces(map, route, signal, pausePlayback, currentPosition)
     map.flyToBounds(bounds, {...options, animate, duration: 0.55});
   }
 
-  function popupFrame(maxHeight, offset) {
+  function popupFrame(contentHeight, offset) {
     const width = Math.min(230, Math.floor(map.getSize().x * 0.6) - 30);
     // Leave room for Leaflet's content margins and the popup tip above its pin.
     const side = Math.ceil((width + 30) / 2) + 12;
     return {
-      popup: {className: 'stop-popup', minWidth: 0, maxWidth: width, maxHeight, offset: [0, -offset], autoPan: false},
-      paddingTopLeft: [side, maxHeight + offset + 48],
+      popup: {className: 'stop-popup', minWidth: 0, maxWidth: width, offset: [0, -offset], autoPan: false},
+      paddingTopLeft: [side, contentHeight + offset + 48],
       paddingBottomRight: [side, 32],
     };
   }
@@ -232,7 +232,7 @@ export function attachPlaces(map, route, signal, pausePlayback, currentPosition)
   function openStop(place) {
     const position = [place.lat, place.lon];
     pausePlayback();
-    const {popup: popupOptions, ...padding} = popupFrame(105, 22);
+    const {popup: popupOptions, ...padding} = popupFrame(146, 22);
     moveToStops(L.latLngBounds([position, currentPosition()]), {
       maxZoom: Math.min(map.getMaxZoom(), map.getZoom() + 1),
       ...padding,
@@ -280,11 +280,37 @@ export function attachPlaces(map, route, signal, pausePlayback, currentPosition)
           moveToStops(viewBounds, {padding: [32, 32], maxZoom: nextZoom});
           return;
         }
-        const {popup: popupOptions, ...padding} = popupFrame(155, 26);
+        const {popup: popupOptions, ...padding} = popupFrame(152, 26);
         moveToStops(viewBounds, {maxZoom: zoom, ...padding}, () => {
           const choices = document.createElement('div');
           choices.className = 'stop-cluster-list';
-          choices.append(...stops.map(stopButton));
+          const group = document.createElement('div');
+          group.className = 'stop-cluster-choices';
+          choices.append(group);
+          const pageSize = 3;
+          let page = 0;
+          const pageCount = Math.ceil(stops.length / pageSize);
+          function showPage() {
+            const start = page * pageSize;
+            group.replaceChildren(...stops.slice(start, start + pageSize).map(place => {
+              const button = stopButton(place);
+              button.title = button.textContent;
+              button.textContent = place.name || names[place.kind];
+              return button;
+            }));
+          }
+          if (pageCount > 1) {
+            const more = document.createElement('button');
+            more.type = 'button';
+            more.className = 'light';
+            more.textContent = 'More stops';
+            more.onclick = () => {
+              page = (page + 1) % pageCount;
+              showPage();
+            };
+            choices.append(more);
+          }
+          showPage();
           L.popup(popupOptions)
             .setLatLng(cluster.getLatLng()).setContent(choices).openOn(map);
         });

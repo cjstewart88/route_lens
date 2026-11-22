@@ -36,7 +36,7 @@ header {
   header { width: 90%; }
 }
 .brand { color: var(--ink); font-size: .95rem; letter-spacing: .06em; }
-.brand-icon { color: var(--muted); }
+
 h1, h2, h3, .ride-total output { font-family: inherit; }
 .card h2, .intro #routeTitle { color: var(--ink); font-weight: 600; }
 .card h2 { font-size: 1.25rem; letter-spacing: -.035em; }
@@ -170,5 +170,66 @@ h1, h2, h3, .ride-total output { font-family: inherit; }
   border-top: 1px solid var(--line);
   font-size: 12px;
 }
-.stop-cluster-list { display: grid; gap: 5px; padding-right: 8px; }
-.stop-cluster-list button { text-align: left; font-size: 12px; }
+.stop-cluster-list, .stop-cluster-choices { display: grid; gap: 5px; min-width: 0; }
+.stop-cluster-list button { text-align: left; font-size: 12px; padding: 5px 8px; }
+.stop-cluster-choices button { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.wordmark { display: inline-flex; align-items: baseline; color: var(--ink); white-space: pre; }
+.binoculars {
+  position: relative;
+  display: inline-flex;
+  align-self: center;
+  align-items: center;
+  gap: .13em;
+  height: .73em;
+  margin-inline: .06em;
+}
+.binoculars::before {
+  content: "";
+  position: absolute;
+  inset: .15em .18em auto;
+  height: .24em;
+  border-top: .09em solid currentColor;
+  border-radius: .12em;
+}
+.binoculars i {
+  position: relative;
+  width: .57em;
+  height: .64em;
+  border: .1em solid currentColor;
+  border-radius: 48% 48% 46% 46%;
+  background: var(--bg);
+}
+.binoculars i:last-child { border-top-color: transparent; }
+.binoculars i::after {
+  content: "";
+  position: absolute;
+  top: .1em;
+  left: .09em;
+  width: .09em;
+  height: .09em;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: .62;
+}
+
+.route-handle {
+  background: #e9848d;
+  border-color: #2b181b;
+  box-shadow: 0 0 0 2px #ffd4d9aa;
+}
+.travel-arrow { color: #30151b; }
+.route-handle::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .route-handle::before { animation: ride-pin-pulse 2.6s ease-out infinite; }
+}
+@keyframes ride-pin-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px #eb929d00; }
+  42% { box-shadow: 0 0 0 6px #eb929d58; }
+}
