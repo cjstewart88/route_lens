@@ -171,6 +171,7 @@ h1, h2, h3, .ride-total output { font-family: inherit; }
   font-size: 12px;
 }
 .stop-cluster-list, .stop-cluster-choices { display: grid; gap: 5px; min-width: 0; }
+.stop-cluster-list { padding-right: 22px; }
 .stop-cluster-list button { text-align: left; font-size: 12px; padding: 5px 8px; }
 .stop-cluster-choices button { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 

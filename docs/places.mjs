@@ -355,7 +355,7 @@ export function attachPlaces(map, route, signal, pausePlayback, currentPosition)
             choices.append(more);
           }
           showPage();
-          L.popup(popupOptions)
+          L.popup({...popupOptions, minWidth: popupOptions.maxWidth})
             .setLatLng(cluster.getLatLng()).setContent(choices).openOn(map);
         });
       });
