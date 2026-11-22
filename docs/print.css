@@ -176,11 +176,11 @@ h1, h2, h3, .ride-total output { font-family: inherit; }
 .stop-cluster-choices button { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .route-handle {
-  background: #e9848d;
-  border-color: #2b181b;
-  box-shadow: 0 0 0 2px #ffd4d9aa;
+  background: #c7b8ff;
+  border-color: #292047;
+  box-shadow: 0 0 0 2px #e2d9ff, 0 0 9px 3px #a587f5a8;
 }
-.travel-arrow { color: #30151b; }
+.travel-arrow { color: #292047; }
 .route-handle::before {
   content: "";
   position: absolute;
@@ -192,6 +192,6 @@ h1, h2, h3, .ride-total output { font-family: inherit; }
   .route-handle::before { animation: ride-pin-pulse 2.6s ease-out infinite; }
 }
 @keyframes ride-pin-pulse {
-  0%, 100% { box-shadow: 0 0 0 2px #eb929d00; }
-  42% { box-shadow: 0 0 0 6px #eb929d58; }
+  0%, 100% { box-shadow: 0 0 5px 1px #a587f500; }
+  42% { box-shadow: 0 0 13px 6px #b394ff70; }
 }
