@@ -150,19 +150,6 @@ function stopPopup(place) {
   const category = document.createElement('span');
   category.className = 'stop-category place-' + place.kind;
   category.textContent = names[place.kind];
-  const title = document.createElement('strong');
-  title.textContent = place.name || names[place.kind];
-  popup.append(category, title);
-  if (place.address) {
-    const address = document.createElement('div');
-    address.className = 'stop-address';
-    address.textContent = place.address;
-    popup.append(address);
-  }
-  const footer = document.createElement('div');
-  footer.className = 'stop-footer';
-  const detail = document.createElement('span');
-  detail.textContent = stopDetail(place);
   const link = document.createElement('a');
   const mapsUrl = new URL('https://www.google.com/maps/search/');
   const coordinates = place.lat + ',' + place.lon;
@@ -174,11 +161,20 @@ function stopPopup(place) {
   link.href = mapsUrl.href;
   link.target = '_blank';
   link.rel = 'noopener noreferrer';
-  link.ariaLabel = 'Open in Google Maps';
-  link.title = link.ariaLabel;
-  link.textContent = '↗';
-  footer.append(detail, link);
-  popup.append(footer);
+  link.className = 'stop-name';
+  link.textContent = place.name || names[place.kind];
+  link.title = 'Open in Google Maps';
+  popup.append(category, link);
+  if (place.address) {
+    const address = document.createElement('div');
+    address.className = 'stop-address';
+    address.textContent = place.address;
+    popup.append(address);
+  }
+  const detail = document.createElement('div');
+  detail.className = 'stop-footer';
+  detail.textContent = stopDetail(place);
+  popup.append(detail);
   return popup;
 }
 
@@ -210,6 +206,17 @@ export function attachPlaces(map, route, signal, pausePlayback, currentPosition)
     map.flyToBounds(bounds, {...options, animate, duration: 0.55});
   }
 
+  function popupFrame(maxHeight, offset) {
+    const width = Math.min(230, Math.floor(map.getSize().x * 0.6) - 30);
+    // Leave room for Leaflet's content margins and the popup tip above its pin.
+    const side = Math.ceil((width + 30) / 2) + 12;
+    return {
+      popup: {className: 'stop-popup', minWidth: 0, maxWidth: width, maxHeight, offset: [0, -offset], autoPan: false},
+      paddingTopLeft: [side, maxHeight + offset + 48],
+      paddingBottomRight: [side, 32],
+    };
+  }
+
   function addPin(place) {
     const label = place.name || names[place.kind];
     const pin = L.marker([place.lat, place.lon], {
@@ -225,17 +232,15 @@ export function attachPlaces(map, route, signal, pausePlayback, currentPosition)
   function openStop(place) {
     const position = [place.lat, place.lon];
     pausePlayback();
+    const {popup: popupOptions, ...padding} = popupFrame(105, 22);
     moveToStops(L.latLngBounds([position, currentPosition()]), {
       maxZoom: Math.min(map.getMaxZoom(), map.getZoom() + 1),
-      paddingTopLeft: [32, 140],
-      paddingBottomRight: [32, 32],
+      ...padding,
     }, () => {
       selectedStop = place;
       drawMarkers();
       const pin = addPin(place);
-      const popup = L.popup({
-        className: 'stop-popup', maxWidth: 270, offset: [0, -22], autoPan: false,
-      }, pin);
+      const popup = L.popup(popupOptions, pin);
       popup.setLatLng(position).setContent(stopPopup(place)).openOn(map);
     });
   }
@@ -275,15 +280,12 @@ export function attachPlaces(map, route, signal, pausePlayback, currentPosition)
           moveToStops(viewBounds, {padding: [32, 32], maxZoom: nextZoom});
           return;
         }
-        moveToStops(viewBounds, {
-          maxZoom: zoom,
-          paddingTopLeft: [32, 228],
-          paddingBottomRight: [32, 32],
-        }, () => {
+        const {popup: popupOptions, ...padding} = popupFrame(155, 26);
+        moveToStops(viewBounds, {maxZoom: zoom, ...padding}, () => {
           const choices = document.createElement('div');
           choices.className = 'stop-cluster-list';
           choices.append(...stops.map(stopButton));
-          L.popup({className: 'stop-popup', maxWidth: 270, maxHeight: 155, offset: [0, -26], autoPan: false})
+          L.popup(popupOptions)
             .setLatLng(cluster.getLatLng()).setContent(choices).openOn(map);
         });
       });

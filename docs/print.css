@@ -154,31 +154,21 @@ h1, h2, h3, .ride-total output { font-family: inherit; }
   color: var(--muted);
 }
 .stop-popup a.leaflet-popup-close-button:hover { color: var(--ink); }
-.stop-card { display: grid; gap: 5px; min-width: 170px; }
-.stop-card strong { font-size: 14px; overflow-wrap: anywhere; }
+.stop-card { display: grid; gap: 5px; overflow-wrap: anywhere; }
+.stop-popup a.stop-name {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .stop-category { background: none; color: var(--stop-color); font-size: 11px; padding-right: 24px; }
 .stop-address, .stop-footer { color: var(--muted); }
 .stop-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
   margin-top: 4px;
   padding-top: 8px;
   border-top: 1px solid var(--line);
   font-size: 12px;
 }
-.stop-footer a {
-  display: grid;
-  place-items: center;
-  flex: 0 0 32px;
-  height: 32px;
-  border: 1px solid #55585b;
-  border-radius: 50%;
-  color: var(--ink);
-  font-size: 16px;
-  text-decoration: none;
-}
-.stop-footer a:hover { background: #343638; }
 .stop-cluster-list { display: grid; gap: 5px; padding-right: 8px; }
 .stop-cluster-list button { text-align: left; font-size: 12px; }
