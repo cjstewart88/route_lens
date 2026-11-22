@@ -199,18 +199,22 @@ export function attachPlaces(map, route, signal, jumpTo) {
       icon: L.divIcon({className: 'place-marker place-' + place.kind,
         html: {rail: 'R', bike: 'B', fuel: 'G'}[place.kind], iconSize: [24, 24], iconAnchor: [12, 12]}),
     }).addTo(markers);
-    pin.bindPopup(() => stopPopup(place), {className: 'stop-popup', maxWidth: 270});
-    pin.on('click', () => jumpTo(place.meters));
+    pin.on('click', () => openStop(place));
     return pin;
   }
 
   function openStop(place) {
+    const position = [place.lat, place.lon];
+    const zoom = Math.min(map.getMaxZoom(), map.getZoom() + 1);
+    map.setView(position, zoom, {animate: false});
     selectedStop = place;
     drawMarkers();
     const pin = addPin(place);
-    map.panTo(pin.getLatLng());
     jumpTo(place.meters);
-    pin.openPopup();
+    const popup = L.popup({
+      className: 'stop-popup', maxWidth: 270, offset: [0, -22], autoPan: false,
+    }, pin);
+    popup.setLatLng(position).setContent(stopPopup(place)).openOn(map);
   }
 
   function stopButton(place) {
@@ -223,6 +227,7 @@ export function attachPlaces(map, route, signal, jumpTo) {
   }
 
   function drawMarkers() {
+    map.closePopup();
     markers.clearLayers();
     for (const {stops} of clusterStops(map, shown.filter(place => place !== selectedStop))) {
       if (stops.length === 1) {
@@ -248,7 +253,7 @@ export function attachPlaces(map, route, signal, jumpTo) {
         const choices = document.createElement('div');
         choices.className = 'stop-cluster-list';
         choices.append(...stops.map(stopButton));
-        L.popup({className: 'stop-popup', maxWidth: 270, maxHeight: 200})
+        L.popup({className: 'stop-popup', maxWidth: 270, maxHeight: 200, offset: [0, -26]})
           .setLatLng(cluster.getLatLng()).setContent(choices).openOn(map);
       });
     }

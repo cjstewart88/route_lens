@@ -62,6 +62,19 @@ h1, h2, h3, .ride-total output { font-family: inherit; }
 }
 .empty-route #openLink:hover, #openLink:hover { background: white; }
 #importDialog #chooseFile { width: 100%; }
+#closeImport {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 1;
+}
+#closeImport:hover { color: var(--ink); }
 .intro #routeTitle { font-size: clamp(1.7rem,3.5vw,2.7rem); line-height: 1.15; }
 #position, .place-toggles input { accent-color: #c2c2c6; }
 .small,.map-credit,.estimate > span { color: var(--muted); }
@@ -132,10 +145,18 @@ h1, h2, h3, .ride-total output { font-family: inherit; }
 }
 .stop-popup .leaflet-popup-content-wrapper { border-radius: var(--radius-panel); }
 .stop-popup .leaflet-popup-content { margin: 13px 14px 11px; font: 13px/1.4 system-ui, sans-serif; }
-.stop-popup a.leaflet-popup-close-button { color: var(--muted); }
+.stop-popup a.leaflet-popup-close-button {
+  top: 5px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  line-height: 28px;
+  color: var(--muted);
+}
+.stop-popup a.leaflet-popup-close-button:hover { color: var(--ink); }
 .stop-card { display: grid; gap: 5px; min-width: 170px; }
 .stop-card strong { font-size: 14px; overflow-wrap: anywhere; }
-.stop-category { color: var(--stop-color); font-size: 11px; padding-right: 16px; }
+.stop-category { background: none; color: var(--stop-color); font-size: 11px; padding-right: 24px; }
 .stop-address, .stop-footer { color: var(--muted); }
 .stop-footer {
   display: flex;

@@ -1,6 +1,6 @@
 import {parseGpx, encodeGpx, decodeGpx, maxGpxBytes, maxSharedUrlLength} from './gpx.mjs';
 import {lookupRouteMakeup} from './makeup.mjs?v=us-1';
-import {attachPlaces} from './places.mjs?v=6';
+import {attachPlaces} from './places.mjs?v=7';
 import {importRideWithGps, RouteUnavailableError} from './rwgps.mjs?v=recents-1';
 import {listRecentRoutes, readRecentFile, forgetRecentRoute, rememberRoute} from './recents.mjs';
 import {MILE,categories,pointAt,routeHeading,tripDistance,tripPosition,calculate,composition,sampleType} from './core.mjs?v=georgia-1';
@@ -586,6 +586,18 @@ function initRouteControls() {
     $('routeLink').focus();
   };
   $('closeImport').onclick = () => dialog.close();
+  const onBackdrop = event => {
+    if (event.target !== dialog) return false;
+    const {left, right, top, bottom} = dialog.getBoundingClientRect();
+    return event.clientX < left || event.clientX > right ||
+      event.clientY < top || event.clientY > bottom;
+  };
+  let pressedBackdrop = false;
+  dialog.addEventListener('pointerdown', event => { pressedBackdrop = onBackdrop(event); });
+  dialog.addEventListener('click', event => {
+    if (pressedBackdrop && onBackdrop(event)) dialog.close();
+    pressedBackdrop = false;
+  });
   dialog.onclose = () => {
     pending?.abort();
     $('emptyRoute').append(importer);
