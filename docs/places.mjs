@@ -182,7 +182,7 @@ function stopPopup(place) {
   return popup;
 }
 
-export function attachPlaces(map, route, signal, pausePlayback) {
+export function attachPlaces(map, route, signal, pausePlayback, currentPosition) {
   const panel = document.getElementById('routePlaces');
   const status = document.getElementById('placesStatus');
   const list = document.getElementById('placesList');
@@ -205,11 +205,12 @@ export function attachPlaces(map, route, signal, pausePlayback) {
 
   function openStop(place) {
     const position = [place.lat, place.lon];
-    const zoom = Math.min(map.getMaxZoom(), map.getZoom() + 1);
-    if (!map.getBounds().contains(position)) {
-      map.panInside(position, {padding: [20, 20], animate: false});
-    }
-    map.setZoomAround(L.latLng(position), zoom, {animate: false});
+    map.fitBounds(L.latLngBounds([position, currentPosition()]), {
+      maxZoom: Math.min(map.getMaxZoom(), map.getZoom() + 1),
+      paddingTopLeft: [32, 140],
+      paddingBottomRight: [32, 32],
+      animate: false,
+    });
     selectedStop = place;
     drawMarkers();
     const pin = addPin(place);
