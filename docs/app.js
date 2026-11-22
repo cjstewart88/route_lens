@@ -502,18 +502,61 @@ function setImportBusy(busy) {
   $('routeImporter').setAttribute('aria-busy', String(busy));
 }
 
+async function routeLinkParams(nextRoute, bytes) {
+  const params = nextRoute.rwgpsId
+    ? new URLSearchParams({rwgps: nextRoute.rwgpsId})
+    : new URLSearchParams({gpx: await encodeGpx(bytes), name: nextRoute.name});
+  if (nextRoute.roundTrip !== false) params.set('round', '1');
+  return params;
+}
+
+async function readRecentRoute(entry, signal) {
+  if (entry.source) return importRideWithGps(entry.source, signal);
+  const bytes = await readRecentFile(entry.id);
+  if (!bytes) throw new RouteUnavailableError('The saved GPX is missing.');
+  return {bytes};
+}
+
+async function setRecentUrl(nextRoute, bytes, entry, request, signal) {
+  const url = new URL(location.href);
+  url.hash = '';
+  const privateSource = entry.source && new URL(entry.source).searchParams.has('privacy_code');
+  try {
+    if (!privateSource) url.hash = (await routeLinkParams(nextRoute, bytes)).toString();
+  } catch {
+    // A local bookmark can still reopen the route if GPX compression fails.
+  }
+  if (!url.hash || url.href.length > maxSharedUrlLength) {
+    url.hash = new URLSearchParams({recent: entry.id}).toString();
+  }
+  if (request !== routeRequest || signal.aborted) return false;
+  if (url.href !== location.href) history.pushState(null, '', url);
+  return true;
+}
+
 async function loadSharedRoute(request) {
   const params = new URLSearchParams(location.hash.slice(1));
+  const fromRecent = params.has('recent');
   const fromRwgps = params.has('rwgps');
-  setImportBusy(fromRwgps || params.has('gpx'));
-  if (!fromRwgps && !params.has('gpx')) return;
+  const hasRoute = fromRecent || fromRwgps || params.has('gpx');
+  setImportBusy(hasRoute);
+  if (!hasRoute) return;
   message('');
   try {
+    if (fromRecent) {
+      const entry = (await listRecentRoutes()).find(item => item.id === params.get('recent'));
+      if (!entry) throw new Error('This route is no longer saved on this device.');
+      const {bytes, rwgpsId, rwgpsLink} = await readRecentRoute(entry);
+      if (request === routeRequest) {
+        presentRoute({...parseGpx(bytes, entry.name), rwgpsId, rwgpsLink, roundTrip: entry.roundTrip}, bytes);
+      }
+      return;
+    }
     if (fromRwgps) {
       const id = params.get('rwgps');
       if (!/^\d+$/.test(id)) throw new Error('This Ride with GPS route ID is invalid.');
       const {bytes, rwgpsId, rwgpsLink} = await importRideWithGps('https://ridewithgps.com/routes/' + id);
-      if (request === routeRequest) presentRoute({...parseGpx(bytes), rwgpsId, rwgpsLink}, bytes);
+      if (request === routeRequest) presentRoute({...parseGpx(bytes), rwgpsId, rwgpsLink, roundTrip: params.get('round') === '1'}, bytes);
       return;
     }
     const bytes = await decodeGpx(params.get('gpx'));
@@ -521,7 +564,7 @@ async function loadSharedRoute(request) {
     shared.roundTrip = params.get('round') === '1';
     if (request === routeRequest) presentRoute(shared, bytes);
   } catch (error) {
-    if (request === routeRequest) message(fromRwgps ? error.message : 'This GPX link could not be opened. Ask for the GPX file and upload it here.');
+    if (request === routeRequest) message(fromRwgps || fromRecent ? error.message : 'This GPX link could not be opened. Ask for the GPX file and upload it here.');
   } finally {
     if (request === routeRequest) setImportBusy(false);
   }
@@ -546,15 +589,8 @@ async function shareRoute() {
   button.disabled = true;
   try {
     const url = new URL(location.href);
-    if (sharedRoute.rwgpsId) {
-      url.hash = new URLSearchParams({rwgps: sharedRoute.rwgpsId}).toString();
-    } else {
-      const encoded = await encodeGpx(file);
-      if (file !== currentGpx) return;
-      const params = new URLSearchParams({gpx: encoded, name: sharedRoute.name});
-      if (sharedRoute.roundTrip !== false) params.set('round', '1');
-      url.hash = params.toString();
-    }
+    url.hash = (await routeLinkParams(sharedRoute, file)).toString();
+    if (file !== currentGpx) return;
     if (url.href.length > maxSharedUrlLength) {
       showShareToast('This GPX is too large for a link. Use Download GPX to share the file.');
       return;
@@ -657,9 +693,13 @@ function initRouteControls() {
       }
       nextRoute.rwgpsId = rwgpsId;
       nextRoute.rwgpsLink = rwgpsLink;
-      if (entry) nextRoute.roundTrip = entry.roundTrip;
+      if (entry) {
+        nextRoute.roundTrip = entry.roundTrip;
+        if (!await setRecentUrl(nextRoute, bytes, entry, request, controller.signal)) return;
+      } else if (location.hash) {
+        history.replaceState(null, '', location.pathname + location.search);
+      }
       presentRoute(nextRoute, bytes);
-      if (location.hash) history.replaceState(null, '', location.pathname + location.search);
       $('routeLink').value = '';
       status.textContent = '';
       if (dialog.open) dialog.close();
@@ -686,12 +726,7 @@ function initRouteControls() {
       }
     }
   }
-  openRecentRoute = entry => openRoute(async signal => {
-    if (entry.source) return importRideWithGps(entry.source, signal);
-    const bytes = await readRecentFile(entry.id);
-    if (!bytes) throw new RouteUnavailableError('The saved GPX is missing.');
-    return {bytes};
-  }, entry.name, entry);
+  openRecentRoute = entry => openRoute(signal => readRecentRoute(entry, signal), entry.name, entry);
   void refreshRecents();
   $('linkForm').onsubmit = event => {
     event.preventDefault();
