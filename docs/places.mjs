@@ -205,14 +205,56 @@ export function attachPlaces(map, route, signal, pausePlayback, currentPosition)
     map.flyToBounds(bounds, {...options, animate, duration: 0.55});
   }
 
+  function visibleMapArea(minWidth, minHeight) {
+    const canvas = map.getContainer().getBoundingClientRect();
+    const details = document.getElementById('detailsOverlay');
+    const street = document.getElementById('streetOverlay');
+    const top = Math.max(12, document.querySelector('body > header').getBoundingClientRect().bottom - canvas.top + 12);
+    const bottom = Math.min(canvas.height - 12,
+      document.querySelector('.scrubber').getBoundingClientRect().top - canvas.top - 12);
+
+    function clearAreas() {
+      const left = details.getBoundingClientRect();
+      const right = street.getBoundingClientRect();
+      return [
+        {
+          left: Math.max(12, left.right - canvas.left + 12),
+          right: Math.min(canvas.width - 56, right.left - canvas.left - 12),
+          top, bottom,
+        },
+        {
+          left: 12, right: canvas.width - 56, top,
+          bottom: Math.min(bottom, left.top - canvas.top - 12, right.top - canvas.top - 12),
+        },
+      ];
+    }
+    const usable = area => area.right - area.left >= minWidth && area.bottom - area.top >= minHeight;
+    const area = clearAreas().find(usable);
+    if (area) return area;
+
+    details.open = false;
+    street.open = false;
+    return clearAreas()[1];
+  }
+
+  function framePadding(area, side, above) {
+    const size = map.getSize();
+    return {
+      paddingTopLeft: [area.left + side, area.top + above],
+      paddingBottomRight: [size.x - area.right + side, size.y - area.bottom + 16],
+    };
+  }
+
   function popupFrame(contentHeight, offset) {
-    const width = Math.min(230, Math.floor(map.getSize().x * 0.6) - 30);
-    // Leave room for Leaflet's content margins and the popup tip above its pin.
-    const side = Math.ceil((width + 30) / 2) + 12;
+    const area = visibleMapArea(300, contentHeight + offset + 68);
+    const availableHeight = area.bottom - area.top;
+    const width = Math.min(230, Math.floor((area.right - area.left) * 0.72) - 30);
+    // Reserve space for the popup as well as the waypoint and ride markers.
+    const side = Math.ceil((width + 30) / 2) + 8;
+    const above = Math.min(contentHeight + offset + 36, Math.max(16, availableHeight - 24));
     return {
       popup: {className: 'stop-popup', minWidth: 0, maxWidth: width, offset: [0, -offset], autoPan: false},
-      paddingTopLeft: [side, contentHeight + offset + 48],
-      paddingBottomRight: [side, 32],
+      ...framePadding(area, side, above),
     };
   }
 
@@ -274,9 +316,12 @@ export function attachPlaces(map, route, signal, pausePlayback, currentPosition)
         const zoom = map.getZoom();
         const viewBounds = L.latLngBounds(bounds.getSouthWest(), bounds.getNorthEast());
         viewBounds.extend(currentPosition());
-        const nextZoom = Math.min(map.getMaxZoom(), map.getBoundsZoom(viewBounds, false, [64, 64]));
+        const area = visibleMapArea(240, 180);
+        const frame = framePadding(area, 16, 16);
+        const combinedPadding = L.point(frame.paddingTopLeft).add(L.point(frame.paddingBottomRight));
+        const nextZoom = Math.min(map.getMaxZoom(), map.getBoundsZoom(viewBounds, false, combinedPadding));
         if (nextZoom > zoom) {
-          moveToStops(viewBounds, {padding: [32, 32], maxZoom: nextZoom});
+          moveToStops(viewBounds, {...frame, maxZoom: nextZoom});
           return;
         }
         const {popup: popupOptions, ...padding} = popupFrame(152, 26);
