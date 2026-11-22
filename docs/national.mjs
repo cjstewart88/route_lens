@@ -1,5 +1,5 @@
-import {pointAt, sampleStarts} from './core.mjs?v=georgia-1';
-import {insideCoverage, classifyTiles} from './georgia.mjs?v=3';
+import {pointAt, sampleStarts} from './core.mjs?v=georgia-2';
+import {insideCoverage, classifyTiles} from './georgia.mjs?v=4';
 import {nationalRef, stateSnapshots} from './map-snapshots.mjs?v=1';
 
 const source = 'https://raw.githubusercontent.com/cjstewart88/route_lens/';

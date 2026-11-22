@@ -1,9 +1,9 @@
 import {parseGpx, encodeGpx, decodeGpx, maxGpxBytes, maxSharedUrlLength} from './gpx.mjs';
-import {lookupRouteMakeup} from './makeup.mjs?v=us-1';
-import {attachPlaces} from './places.mjs?v=17';
+import {lookupRouteMakeup} from './makeup.mjs?v=us-2';
+import {attachPlaces} from './places.mjs?v=18';
 import {importRideWithGps, RouteUnavailableError} from './rwgps.mjs?v=recents-1';
 import {listRecentRoutes, readRecentFile, forgetRecentRoute, rememberRoute} from './recents.mjs';
-import {MILE,categories,pointAt,routeHeading,tripDistance,tripPosition,calculate,composition,sampleType} from './core.mjs?v=georgia-1';
+import {MILE,categories,pointAt,routeHeading,tripDistance,tripPosition,calculate,composition,sampleType} from './core.mjs?v=georgia-2';
 const $=id=>document.getElementById(id);
 const compactMap = window.matchMedia('(max-width: 720px)');
 const streetOverlay = $('streetOverlay');
@@ -215,7 +215,40 @@ function updateTripBar() {
 }
 
 function nearest(latlng){const q=map.latLngToLayerPoint(latlng);let best=Infinity,meters=0;for(let i=1;i<route.points.length;i++){if(route.segmentBreaks?.has(i))continue;const a=map.latLngToLayerPoint(route.points[i-1].slice(0,2)),b=map.latLngToLayerPoint(route.points[i].slice(0,2)),dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((q.x-a.x)*dx+(q.y-a.y)*dy)/(dx*dx+dy*dy||1))),d=(q.x-a.x-t*dx)**2+(q.y-a.y-t*dy)**2;if(d<best){best=d;meters=route.cumulative[i-1]+t*(route.cumulative[i]-route.cumulative[i-1]);}}return meters;}
-function drawComposition(){const totals=composition(analysis.samples,overrides);$('compositionBar').replaceChildren();$('compositionRows').replaceChildren();for(const [key,c] of Object.entries(categories)){const pct=totals[key]/route.distanceMeters*100,bar=document.createElement('div');bar.style.width=pct+'%';bar.style.background=c.color;bar.title=`${c.label}: ${pct.toFixed(1)}%`;$('compositionBar').append(bar);const row=document.createElement('div');row.className='composition-row';const swatch=document.createElement('span');swatch.className='swatch';swatch.style.background=c.color;const label=document.createElement('span');label.textContent=c.label;const percent=document.createElement('strong');percent.textContent=pct.toFixed(1)+'%';const miles=document.createElement('small');miles.textContent=(totals[key]*tripDistance(route)/route.distanceMeters/MILE).toFixed(2)+' mi';row.append(swatch,label,percent,miles);$('compositionRows').append(row);}drawSurfaceLines();}
+function drawComposition() {
+  const totals = composition(analysis.samples, overrides);
+  const bars = $('compositionBar');
+  const rows = $('compositionRows');
+  bars.replaceChildren();
+  rows.replaceChildren();
+  for (const [key, category] of Object.entries(categories)) {
+    const distance = totals[key];
+    if (distance <= 0) continue;
+
+    const fraction = distance / route.distanceMeters;
+    const percentage = (fraction * 100).toFixed(1) + '%';
+    const bar = document.createElement('div');
+    bar.style.width = (fraction * 100) + '%';
+    bar.style.background = category.color;
+    bar.title = category.label + ': ' + percentage;
+    bars.append(bar);
+
+    const row = document.createElement('div');
+    row.className = 'composition-row';
+    const swatch = document.createElement('span');
+    swatch.className = 'swatch';
+    swatch.style.background = category.color;
+    const label = document.createElement('span');
+    label.textContent = category.label;
+    const percent = document.createElement('strong');
+    percent.textContent = percentage;
+    const miles = document.createElement('small');
+    miles.textContent = (fraction * tripDistance(route) / MILE).toFixed(2) + ' mi';
+    row.append(swatch, label, percent, miles);
+    rows.append(row);
+  }
+  drawSurfaceLines();
+}
 
 function drawSurfaceLines() {
   if (!map || !analysis.samples.length) return;

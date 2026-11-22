@@ -1,7 +1,7 @@
-import {MILE, pointAt} from './core.mjs?v=georgia-1';
-import {insideCoverage} from './georgia.mjs?v=3';
-import {overpassQuery} from './makeup.mjs?v=us-1';
-import {readNationalManifest, readStateManifests, nationalPlaces} from './national.mjs?v=1';
+import {MILE, pointAt} from './core.mjs?v=georgia-2';
+import {insideCoverage} from './georgia.mjs?v=4';
+import {overpassQuery} from './makeup.mjs?v=us-2';
+import {readNationalManifest, readStateManifests, nationalPlaces} from './national.mjs?v=2';
 
 const radius = MILE / 4;
 const names = {rail: 'Rail station', bike: 'Bike shop', fuel: 'Gas station'};
