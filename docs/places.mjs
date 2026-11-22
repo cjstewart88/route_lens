@@ -249,15 +249,23 @@ export function attachPlaces(map, route, signal, pausePlayback, currentPosition)
       }).addTo(markers);
       cluster.on('click', () => {
         const zoom = map.getZoom();
-        if (zoom < map.getMaxZoom()) {
-          map.setView(bounds.getCenter(), Math.min(map.getMaxZoom(),
-            Math.max(zoom + 1, map.getBoundsZoom(bounds, false, [80, 80]))));
+        const viewBounds = L.latLngBounds(bounds.getSouthWest(), bounds.getNorthEast());
+        viewBounds.extend(currentPosition());
+        const nextZoom = Math.min(map.getMaxZoom(), map.getBoundsZoom(viewBounds, false, [64, 64]));
+        if (nextZoom > zoom) {
+          map.fitBounds(viewBounds, {padding: [32, 32], maxZoom: nextZoom, animate: false});
           return;
         }
+        map.fitBounds(viewBounds, {
+          maxZoom: zoom,
+          paddingTopLeft: [32, 228],
+          paddingBottomRight: [32, 32],
+          animate: false,
+        });
         const choices = document.createElement('div');
         choices.className = 'stop-cluster-list';
         choices.append(...stops.map(stopButton));
-        L.popup({className: 'stop-popup', maxWidth: 270, maxHeight: 200, offset: [0, -26]})
+        L.popup({className: 'stop-popup', maxWidth: 270, maxHeight: 155, offset: [0, -26], autoPan: false})
           .setLatLng(cluster.getLatLng()).setContent(choices).openOn(map);
       });
     }
