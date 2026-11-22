@@ -73,7 +73,7 @@ body:has(#routeExplorer:not([hidden])) > header {
 #routeExplorer .map-overlay-info:not([open]) { max-width: min(370px, calc(100vw - 145px)); }
 #routeExplorer .map-overlay-info[open] { width: min(370px, 40vw); }
 .map-details-content {
-  max-height: max(48px, calc(100dvh - 225px));
+  max-height: max(48px, calc(100dvh - 248px));
   overflow: auto;
 }
 #routeExplorer .route-panel-title, #routeExplorer .route-panel-actions { background: #29292c; }
