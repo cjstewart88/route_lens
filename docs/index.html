@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#121212"><meta name="maps-embed-key" content=""><title>Route Lens</title><link rel="stylesheet" href="vendor/leaflet.css"><link rel="stylesheet" href="style.css?v=recents-1"><link rel="stylesheet" href="print.css?v=17"><link rel="stylesheet" href="map-layout.css?v=3"></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#121212"><meta name="maps-embed-key" content=""><title>Route Lens</title><link rel="stylesheet" href="vendor/leaflet.css"><link rel="stylesheet" href="style.css?v=recents-1"><link rel="stylesheet" href="print.css?v=17"><link rel="stylesheet" href="map-layout.css?v=4"></head>
 <body>
 <header><a class="brand" href="./" aria-label="Route Lens">Route Lens</a><button id="gpxUpload" type="button" class="light" aria-haspopup="dialog" hidden>Change route</button></header>
 <main>
@@ -28,7 +28,7 @@
 </dialog>
 <section id="routeExplorer" class="explorer" hidden>
 
-<div class="map-panel"><div id="map" aria-label="Interactive route map"><div class="loading">Loading your route…</div></div><button id="fit" type="button" class="light">Fit route</button></div>
+<div class="map-panel"><div id="map" aria-label="Interactive route map"><div class="loading">Loading your route…</div></div></div>
 <div class="scrubber">
   <div class="scrub-controls">
     <button type="button" id="routePlayback" class="light playback-button" aria-label="Play route" aria-controls="position" data-playing="false" disabled><span class="playback-icon" aria-hidden="true"></span></button>
@@ -46,10 +46,8 @@
 </div>
 </details>
 <details id="detailsOverlay" class="map-overlay map-overlay-info" open>
-  <summary>Route details</summary>
-  <div class="map-details-content">
-  <section class="intro">
-  <h1 id="routeTitle"></h1>
+  <summary class="route-panel-title"><h1 id="routeTitle"></h1></summary>
+  <div class="intro route-panel-actions">
   <span id="routeDistance" class="route-distance"></span>
   <div class="route-actions">
 
@@ -60,7 +58,8 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 13 4-4m-6.5 2.5-2 2a4 4 0 0 0 5.7 5.7l3.3-3.3a4 4 0 0 0 0-5.7m2 2.3 2-2a4 4 0 0 0-5.7-5.7L9.5 8.1a4 4 0 0 0 0 5.7"/></svg>
     </button>
   </div>
-</section>
+  </div>
+  <div class="map-details-content">
   <section id="routePlaces" class="card" hidden aria-labelledby="placesHeading">
   <h2 id="placesHeading">Stops near the route</h2>
   <div class="place-toggles">
@@ -71,14 +70,14 @@
   <p id="placesStatus" class="small" role="status"></p>
   <ul id="placesList"></ul>
 </section>
-<section id="routeResults" class="lower" hidden><article class="card makeup"><h2>Route makeup</h2><p id="makeupNote" class="small" role="status" hidden></p><div id="compositionBar" class="composition-bar"></div><div id="compositionRows"></div><small class="map-credit">Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a></small>
+<section id="routeResults" class="lower" hidden><article class="card makeup"><h2>Route makeup</h2><p id="makeupNote" class="small" role="status" hidden></p><div id="compositionBar" class="composition-bar"></div><div id="compositionRows"></div>
 </article>
 <article class="card calculator">
   <h2>Estimated time</h2>
   <div class="ride-time-fields">
-    <div><label for="avgSpeed">Average moving speed <span>mph</span></label>
+    <div><label for="avgSpeed">Avg. moving speed <span>mph</span></label>
     <input id="avgSpeed" type="number" min="0" step="any" inputmode="decimal">
-    </div><div><label for="stopTime">Estimated stop time <span>min</span></label>
+    </div><div><label for="stopTime">Est. stop time <span>min</span></label>
     <input id="stopTime" type="number" min="0" step="any" inputmode="decimal"></div>
   </div>
   <div class="estimate ride-total">
@@ -87,8 +86,9 @@
   </div>
   <p id="rideTimeSaveStatus" class="small" role="status" hidden></p>
 </article></section>
+  <footer class="route-panel-credit"><small class="map-credit">Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a></small></footer>
   </div>
 </details>
 </section>
-</main><script src="vendor/leaflet.js"></script><script type="module" src="app.js?v=window-map-1"></script></body></html>
+</main><script src="vendor/leaflet.js"></script><script type="module" src="app.js?v=window-map-2"></script></body></html>
 

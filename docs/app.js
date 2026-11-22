@@ -338,7 +338,6 @@ let routeHitLine;
 function drawRouteMap() {
   if (!window.L) {
     $('map').textContent = 'The map library could not load. Use the distance slider to explore the route.';
-    $('fit').disabled = true;
     return;
   }
   const container = $('map');
@@ -352,11 +351,10 @@ function drawRouteMap() {
   const starts = route.segmentStarts ?? [0];
   const segments = starts.map((start, i) => coordinates.slice(start, starts[i + 1] ?? coordinates.length));
   const bounds = L.latLngBounds(coordinates);
-  const fitRoute = () => map.fitBounds(bounds, {
+  map.fitBounds(bounds, {
     paddingTopLeft: [35, 88],
     paddingBottomRight: [35, 98],
   });
-  fitRoute();
   line = L.layerGroup().addTo(map);
   routeHitLine = L.polyline(segments, {color: categories.unknown.color, weight: 6, opacity: .95}).addTo(map);
   const finish = route.roundTrip === false ? 'End' : 'Turnaround';
@@ -399,8 +397,6 @@ function drawRouteMap() {
     draggingRoute = false;
     map.dragging.enable();
   }, {signal: mapListeners.signal});
-  $('fit').disabled = false;
-  $('fit').onclick = fitRoute;
 }
 
 function setMakeupStatus(text) {
@@ -458,6 +454,7 @@ function presentRoute(nextRoute, bytes, estimate) {
   $('compositionRows').hidden = !estimate;
   setMakeupStatus('');
   $('routeTitle').textContent = route.name;
+  $('routeTitle').title = route.name;
   document.title = route.name + ' · Route Lens';
   $('routeDistance').textContent = (tripDistance(route) / MILE).toFixed(2) + ' mi';
   $('rideTimeLabel').textContent = route.roundTrip === false ? 'Estimated route time' : 'Estimated round-trip time';
