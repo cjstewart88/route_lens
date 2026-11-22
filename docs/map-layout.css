@@ -1,8 +1,7 @@
-.map-layout body:has(#routeExplorer:not([hidden])) { overflow: hidden; }
-.map-layout body:has(#routeExplorer:not([hidden])) header,
-.map-layout main:has(#routeExplorer:not([hidden])) .intro,
-.map-layout .scrubber,
-.map-layout .map-overlay {
+body:has(#routeExplorer:not([hidden])) { overflow: hidden; }
+body:has(#routeExplorer:not([hidden])) > header,
+#routeExplorer .scrubber,
+#routeExplorer .map-overlay {
   position: fixed;
   margin: 0;
   z-index: 500;
@@ -11,69 +10,76 @@
   border-radius: var(--radius-panel);
   box-shadow: 0 6px 22px #0005;
 }
-.map-layout body:has(#routeExplorer:not([hidden])) header {
+body:has(#routeExplorer:not([hidden])) > header {
   inset: 12px 12px auto;
   width: auto;
   max-width: none;
-  gap: 12px;
   padding: 7px 12px;
 }
-.map-layout .map-standard { margin: 0 0 0 auto; font-size: 12px; }
-.map-layout header #gpxUpload { margin-left: 0; }
-.map-layout main:has(#routeExplorer:not([hidden])) .intro {
-  top: 75px;
-  left: 56px;
-  width: min(26rem, calc(100vw - 172px));
-  padding: 10px 12px 6px;
+#routeExplorer { display: block; border: 0; background: none; overflow: visible; }
+#routeExplorer .map-panel { position: fixed; inset: 0; border: 0; }
+#routeExplorer #map { width: 100%; height: 100%; }
+#routeExplorer .leaflet-top, #routeExplorer #fit { top: 65px; }
+#routeExplorer .leaflet-bottom { bottom: 69px; }
+#routeExplorer .scrubber { inset: auto 12px 12px; padding-block: 6px; }
+#routeExplorer .map-overlay { bottom: 84px; padding: 0; max-width: calc(100vw - 24px); }
+#routeExplorer .map-overlay summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 38px;
+  padding: 6px 12px;
+  list-style: none;
+  color: var(--ink);
+  font-size: 13px;
 }
-.map-layout .intro #routeTitle {
-  font-size: clamp(1rem, 2vw, 1.4rem);
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
+#routeExplorer .map-overlay summary::-webkit-details-marker { display: none; }
+#routeExplorer .map-overlay summary::after {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid var(--muted);
+  border-bottom: 1.5px solid var(--muted);
+  transform: translateY(2px) rotate(225deg);
 }
-.map-layout .intro .route-distance { font-size: 13px; }
-.map-layout .intro .route-action { padding: 5px 7px; }
-.map-layout .explorer { display: block; border: 0; background: none; overflow: visible; }
-.map-layout .map-panel { position: fixed; inset: 0; border: 0; }
-.map-layout #map { width: 100%; height: 100%; }
-.map-layout .leaflet-top, .map-layout #fit { top: 65px; }
-.map-layout .leaflet-bottom { bottom: 69px; }
-.map-layout .scrubber { inset: auto 12px 12px; padding-block: 6px; }
-.map-layout .map-overlay { bottom: 84px; padding: 0; max-width: calc(100vw - 24px); }
-.map-layout .map-overlay summary { padding: 8px 12px; font-size: 13px; }
-.map-layout .map-overlay-street { right: 12px; width: min(350px, 45vw); }
-.map-layout .street-panel { border: 0; }
-.map-layout .inline-viewer,
-.map-layout .inline-viewer iframe { height: min(205px, 30dvh); min-height: 0; }
-.map-layout .map-overlay-info {
-  left: 12px;
-  width: min(380px, 45vw);
-  max-height: max(48px, calc(100dvh - 265px));
+#routeExplorer .map-overlay[open] summary::after { transform: translateY(-2px) rotate(45deg); }
+#routeExplorer .map-overlay[open] summary { border-bottom: 1px solid var(--line); }
+#routeExplorer .map-overlay-street { right: 12px; }
+#routeExplorer .map-overlay-street[open] { width: min(580px, 43vw); }
+#routeExplorer .street-panel { border: 0; border-radius: 0 0 var(--radius-panel) var(--radius-panel); overflow: hidden; }
+#routeExplorer .inline-viewer,
+#routeExplorer .inline-viewer iframe { height: min(335px, 42dvh); min-height: 0; }
+#routeExplorer .map-overlay-info { left: 12px; }
+#routeExplorer .map-overlay-info[open] { width: min(370px, 40vw); }
+.map-details-content {
+  max-height: max(48px, calc(100dvh - 185px));
   overflow: auto;
 }
-.map-layout #routePlaces, .map-layout .lower { margin: 0; }
-.map-layout .lower { display: block; }
-.map-layout .map-overlay-info .card {
+#routeExplorer .intro { margin: 0; padding: 12px 14px 8px; }
+#routeExplorer .intro #routeTitle { font-size: clamp(1.15rem, 2vw, 1.55rem); }
+#routeExplorer .intro .route-distance { font-size: 13px; }
+#routeExplorer .intro .route-action { padding: 5px 7px; }
+#routeExplorer #routePlaces, #routeExplorer .lower { margin: 0; }
+#routeExplorer .lower { display: block; }
+.map-overlay-info .card {
   background: transparent;
   border: 0;
   border-top: 1px solid var(--line);
   border-radius: 0;
 }
-.map-layout #shareToast { bottom: 86px; }
-.map-layout main:has(#routeExplorer:not([hidden])) #gpxMessage,
-.map-layout main:has(#routeExplorer:not([hidden])) #gpxShareUrl {
+body:has(#routeExplorer:not([hidden])) #shareToast { bottom: 86px; }
+main:has(#routeExplorer:not([hidden])) :is(#gpxMessage, #gpxShareUrl) {
   position: fixed;
   z-index: 501;
-  top: 185px;
+  top: 112px;
   left: 12px;
   width: min(30rem, calc(100vw - 24px));
   padding: 8px;
   background: var(--bg);
 }
 @media (max-width: 720px) {
-  .map-layout .map-overlay { width: auto; }
-  .map-layout .map-overlay[open] { width: calc(100vw - 24px); z-index: 502; }
-  .map-layout .map-overlay-info { max-height: min(48dvh, calc(100dvh - 235px)); }
+  #routeExplorer .map-overlay[open] { bottom: 130px; width: calc(100vw - 24px); }
+  .map-details-content { max-height: min(40dvh, calc(100dvh - 230px)); }
 }

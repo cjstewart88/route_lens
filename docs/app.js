@@ -4,11 +4,17 @@ import {attachPlaces} from './places.mjs?v=14';
 import {importRideWithGps, RouteUnavailableError} from './rwgps.mjs?v=recents-1';
 import {listRecentRoutes, readRecentFile, forgetRecentRoute, rememberRoute} from './recents.mjs';
 import {MILE,categories,pointAt,routeHeading,tripDistance,tripPosition,calculate,composition,sampleType} from './core.mjs?v=georgia-1';
-if (new URLSearchParams(location.search).get('layout') === 'map') {
-  await import('./map-layout.mjs?v=1');
+const $=id=>document.getElementById(id);
+const compactMap = window.matchMedia('(max-width: 720px)');
+const streetOverlay = $('streetOverlay');
+const detailsOverlay = $('detailsOverlay');
+streetOverlay.open = !compactMap.matches;
+for (const [panel, other] of [[streetOverlay, detailsOverlay], [detailsOverlay, streetOverlay]]) {
+  panel.addEventListener('toggle', () => {
+    if (compactMap.matches && panel.open) other.open = false;
+  });
 }
-
-const $=id=>document.getElementById(id);let route,map,marker,line,selected=0,travelDirection=1,tripLeg="outbound",tripMeters=0,analysis,syncTimer,selectedView,directionAnchor=0,overrides={};
+let route,map,marker,line,selected=0,travelDirection=1,tripLeg="outbound",tripMeters=0,analysis,syncTimer,selectedView,directionAnchor=0,overrides={};
 const storageKey = kind => `routeLens.${kind}.${route.id}`;
 const embedKey = document.querySelector('meta[name="maps-embed-key"]').content.trim();
 const playbackStepMeters = 160;
@@ -346,9 +352,10 @@ function drawRouteMap() {
   const starts = route.segmentStarts ?? [0];
   const segments = starts.map((start, i) => coordinates.slice(start, starts[i + 1] ?? coordinates.length));
   const bounds = L.latLngBounds(coordinates);
-  const fitRoute = () => map.fitBounds(bounds, container.closest('.map-layout')
-    ? {paddingTopLeft: [35, 88], paddingBottomRight: [35, 98]}
-    : {padding: [35, 30]});
+  const fitRoute = () => map.fitBounds(bounds, {
+    paddingTopLeft: [35, 88],
+    paddingBottomRight: [35, 98],
+  });
   fitRoute();
   line = L.layerGroup().addTo(map);
   routeHitLine = L.polyline(segments, {color: categories.unknown.color, weight: 6, opacity: .95}).addTo(map);
