@@ -181,7 +181,6 @@ function stopPopup(place) {
 export function attachPlaces(map, route, signal, pausePlayback, currentPosition) {
   const panel = document.getElementById('routePlaces');
   const status = document.getElementById('placesStatus');
-  const list = document.getElementById('placesList');
   const toggles = [...panel.querySelectorAll('input')];
   const markers = L.layerGroup().addTo(map);
   let places = [], loading = false, loaded = false, partial = false;
@@ -324,15 +323,9 @@ export function attachPlaces(map, route, signal, pausePlayback, currentPosition)
     shown = places.filter(place => enabled.has(place.kind));
     selectedStop = undefined;
     drawMarkers();
-    list.replaceChildren();
     status.textContent = !enabled.size ? '' : loading ? 'Looking for nearby stops…' : partial
       ? 'Live stop lookup unavailable. Showing cached results.'
       : shown.length ? '' : 'No selected stops within ¼ mile.';
-    for (const place of shown) {
-      const item = document.createElement('li');
-      item.append(stopButton(place));
-      list.append(item);
-    }
   }
 
   function zoomMarkers() {
@@ -363,6 +356,5 @@ export function attachPlaces(map, route, signal, pausePlayback, currentPosition)
     clearPendingPopup();
     map.off('zoomend', zoomMarkers);
   }, {once: true});
-  panel.hidden = false;
   void update();
 }

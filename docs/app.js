@@ -1,6 +1,6 @@
 import {parseGpx, encodeGpx, decodeGpx, maxGpxBytes, maxSharedUrlLength} from './gpx.mjs';
 import {lookupRouteMakeup} from './makeup.mjs?v=us-1';
-import {attachPlaces} from './places.mjs?v=14';
+import {attachPlaces} from './places.mjs?v=15';
 import {importRideWithGps, RouteUnavailableError} from './rwgps.mjs?v=recents-1';
 import {listRecentRoutes, readRecentFile, forgetRecentRoute, rememberRoute} from './recents.mjs';
 import {MILE,categories,pointAt,routeHeading,tripDistance,tripPosition,calculate,composition,sampleType} from './core.mjs?v=georgia-1';
@@ -359,7 +359,7 @@ function drawRouteMap() {
   fitRoute();
   const fitControl = L.control({position: 'topright'});
   fitControl.onAdd = () => {
-    const button = L.DomUtil.create('button', 'light map-fit-control');
+    const button = L.DomUtil.create('button', 'light map-control-icon');
     button.type = 'button';
     button.title = 'Fit route to map';
     button.setAttribute('aria-label', button.title);
@@ -369,6 +369,14 @@ function drawRouteMap() {
     return button;
   };
   fitControl.addTo(map);
+  const stopsControl = L.control({position: 'topright'});
+  stopsControl.onAdd = () => {
+    const menu = $('mapStopsControl').content.firstElementChild.cloneNode(true);
+    L.DomEvent.disableClickPropagation(menu);
+    L.DomEvent.disableScrollPropagation(menu);
+    return menu;
+  };
+  stopsControl.addTo(map);
   line = L.layerGroup().addTo(map);
   routeHitLine = L.polyline(segments, {color: categories.unknown.color, weight: 6, opacity: .95}).addTo(map);
   const finish = route.roundTrip === false ? 'End' : 'Turnaround';

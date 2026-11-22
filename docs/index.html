@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#121212"><meta name="maps-embed-key" content=""><title>Route Lens</title><link rel="stylesheet" href="vendor/leaflet.css"><link rel="stylesheet" href="style.css?v=recents-1"><link rel="stylesheet" href="print.css?v=17"><link rel="stylesheet" href="map-layout.css?v=8"></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#121212"><meta name="maps-embed-key" content=""><title>Route Lens</title><link rel="stylesheet" href="vendor/leaflet.css"><link rel="stylesheet" href="style.css?v=recents-1"><link rel="stylesheet" href="print.css?v=17"><link rel="stylesheet" href="map-layout.css?v=9"></head>
 <body>
 <header><a class="brand" href="./" aria-label="Route Lens">Route Lens</a><button id="gpxUpload" type="button" class="light" aria-haspopup="dialog" hidden>Change route</button></header>
 <main>
@@ -26,6 +26,22 @@
 <dialog id="importDialog" class="card" aria-labelledby="importHeading">
   <div class="dialog-heading"><h2 id="importHeading">Change route</h2><button id="closeImport" class="light" type="button" aria-label="Close">×</button></div>
 </dialog>
+<template id="mapStopsControl">
+  <details class="map-stops-control">
+    <summary class="light map-control-icon" aria-label="Stops near the route" title="Stops near the route">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+    </summary>
+    <section id="routePlaces" class="map-stops-panel" aria-labelledby="placesHeading">
+  <h2 id="placesHeading">Stops near the route</h2>
+  <div class="place-toggles">
+    <label><input type="checkbox" value="rail"> Train &amp; light rail</label>
+    <label><input type="checkbox" value="bike"> Bike shops</label>
+    <label><input type="checkbox" value="fuel"> Gas stations</label>
+  </div>
+  <p id="placesStatus" class="small" role="status"></p>
+</section>
+  </details>
+</template>
 <section id="routeExplorer" class="explorer" hidden>
 
 <div class="map-panel"><div id="map" aria-label="Interactive route map"><div class="loading">Loading your route…</div></div></div>
@@ -61,16 +77,6 @@
   </div>
   </div>
   <div class="map-details-content">
-  <section id="routePlaces" class="card" hidden aria-labelledby="placesHeading">
-  <h2 id="placesHeading">Stops near the route</h2>
-  <div class="place-toggles">
-    <label><input type="checkbox" value="rail"> Train &amp; light rail</label>
-    <label><input type="checkbox" value="bike"> Bike shops</label>
-    <label><input type="checkbox" value="fuel"> Gas stations</label>
-  </div>
-  <p id="placesStatus" class="small" role="status"></p>
-  <ul id="placesList"></ul>
-</section>
 <section id="routeResults" class="lower" hidden><article class="card makeup"><h2>Route makeup</h2><p id="makeupNote" class="small" role="status" hidden></p><div id="compositionBar" class="composition-bar"></div><div id="compositionRows"></div>
 </article>
 <article class="card calculator">
@@ -91,5 +97,5 @@
   </div>
 </details>
 </section>
-</main><script src="vendor/leaflet.js"></script><script type="module" src="app.js?v=window-map-4"></script></body></html>
+</main><script src="vendor/leaflet.js"></script><script type="module" src="app.js?v=window-map-5"></script></body></html>
 
