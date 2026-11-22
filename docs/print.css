@@ -174,45 +174,6 @@ h1, h2, h3, .ride-total output { font-family: inherit; }
 .stop-cluster-list button { text-align: left; font-size: 12px; padding: 5px 8px; }
 .stop-cluster-choices button { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.wordmark { display: inline-flex; align-items: baseline; color: var(--ink); white-space: pre; }
-.binoculars {
-  position: relative;
-  display: inline-flex;
-  align-self: center;
-  align-items: center;
-  gap: .13em;
-  height: .73em;
-  margin-inline: .06em;
-}
-.binoculars::before {
-  content: "";
-  position: absolute;
-  inset: .15em .18em auto;
-  height: .24em;
-  border-top: .09em solid currentColor;
-  border-radius: .12em;
-}
-.binoculars i {
-  position: relative;
-  width: .57em;
-  height: .64em;
-  border: .1em solid currentColor;
-  border-radius: 48% 48% 46% 46%;
-  background: var(--bg);
-}
-.binoculars i:last-child { border-top-color: transparent; }
-.binoculars i::after {
-  content: "";
-  position: absolute;
-  top: .1em;
-  left: .09em;
-  width: .09em;
-  height: .09em;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: .62;
-}
-
 .route-handle {
   background: #e9848d;
   border-color: #2b181b;
