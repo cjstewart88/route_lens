@@ -189,7 +189,26 @@ export function attachPlaces(map, route, signal, pausePlayback, currentPosition)
   const toggles = [...panel.querySelectorAll('input')];
   const markers = L.layerGroup().addTo(map);
   let places = [], loading = false, loaded = false, partial = false;
-  let shown = [], selectedStop;
+  let shown = [], selectedStop, afterMove;
+
+  function clearPendingPopup() {
+    if (afterMove) map.off('moveend', afterMove);
+    afterMove = undefined;
+  }
+
+  function moveToStops(bounds, options, openPopup) {
+    clearPendingPopup();
+    map.stop();
+    if (openPopup) {
+      afterMove = () => {
+        clearPendingPopup();
+        openPopup();
+      };
+      map.on('moveend', afterMove);
+    }
+    const animate = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    map.flyToBounds(bounds, {...options, animate, duration: 0.55});
+  }
 
   function addPin(place) {
     const label = place.name || names[place.kind];
@@ -205,20 +224,20 @@ export function attachPlaces(map, route, signal, pausePlayback, currentPosition)
 
   function openStop(place) {
     const position = [place.lat, place.lon];
-    map.fitBounds(L.latLngBounds([position, currentPosition()]), {
+    pausePlayback();
+    moveToStops(L.latLngBounds([position, currentPosition()]), {
       maxZoom: Math.min(map.getMaxZoom(), map.getZoom() + 1),
       paddingTopLeft: [32, 140],
       paddingBottomRight: [32, 32],
-      animate: false,
+    }, () => {
+      selectedStop = place;
+      drawMarkers();
+      const pin = addPin(place);
+      const popup = L.popup({
+        className: 'stop-popup', maxWidth: 270, offset: [0, -22], autoPan: false,
+      }, pin);
+      popup.setLatLng(position).setContent(stopPopup(place)).openOn(map);
     });
-    selectedStop = place;
-    drawMarkers();
-    const pin = addPin(place);
-    pausePlayback();
-    const popup = L.popup({
-      className: 'stop-popup', maxWidth: 270, offset: [0, -22], autoPan: false,
-    }, pin);
-    popup.setLatLng(position).setContent(stopPopup(place)).openOn(map);
   }
 
   function stopButton(place) {
@@ -253,25 +272,26 @@ export function attachPlaces(map, route, signal, pausePlayback, currentPosition)
         viewBounds.extend(currentPosition());
         const nextZoom = Math.min(map.getMaxZoom(), map.getBoundsZoom(viewBounds, false, [64, 64]));
         if (nextZoom > zoom) {
-          map.fitBounds(viewBounds, {padding: [32, 32], maxZoom: nextZoom, animate: false});
+          moveToStops(viewBounds, {padding: [32, 32], maxZoom: nextZoom});
           return;
         }
-        map.fitBounds(viewBounds, {
+        moveToStops(viewBounds, {
           maxZoom: zoom,
           paddingTopLeft: [32, 228],
           paddingBottomRight: [32, 32],
-          animate: false,
+        }, () => {
+          const choices = document.createElement('div');
+          choices.className = 'stop-cluster-list';
+          choices.append(...stops.map(stopButton));
+          L.popup({className: 'stop-popup', maxWidth: 270, maxHeight: 155, offset: [0, -26], autoPan: false})
+            .setLatLng(cluster.getLatLng()).setContent(choices).openOn(map);
         });
-        const choices = document.createElement('div');
-        choices.className = 'stop-cluster-list';
-        choices.append(...stops.map(stopButton));
-        L.popup({className: 'stop-popup', maxWidth: 270, maxHeight: 155, offset: [0, -26], autoPan: false})
-          .setLatLng(cluster.getLatLng()).setContent(choices).openOn(map);
       });
     }
   }
 
   function render() {
+    clearPendingPopup();
     const enabled = new Set(toggles.filter(input => input.checked).map(input => input.value));
     shown = places.filter(place => enabled.has(place.kind));
     selectedStop = undefined;
@@ -311,7 +331,10 @@ export function attachPlaces(map, route, signal, pausePlayback, currentPosition)
   }
   for (const toggle of toggles) toggle.addEventListener('change', update, {signal});
   map.on('zoomend', zoomMarkers);
-  signal.addEventListener('abort', () => map.off('zoomend', zoomMarkers), {once: true});
+  signal.addEventListener('abort', () => {
+    clearPendingPopup();
+    map.off('zoomend', zoomMarkers);
+  }, {once: true});
   panel.hidden = false;
   void update();
 }
