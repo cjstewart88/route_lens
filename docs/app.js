@@ -342,7 +342,8 @@ function drawRouteMap() {
   }
   const container = $('map');
   container.replaceChildren();
-  map = L.map(container, {scrollWheelZoom: true, zoomSnap: .25, closePopupOnClick: false});
+  map = L.map(container, {scrollWheelZoom: true, zoomSnap: .25, closePopupOnClick: false, zoomControl: false});
+  L.control.zoom({position: "topright"}).addTo(map);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -351,10 +352,23 @@ function drawRouteMap() {
   const starts = route.segmentStarts ?? [0];
   const segments = starts.map((start, i) => coordinates.slice(start, starts[i + 1] ?? coordinates.length));
   const bounds = L.latLngBounds(coordinates);
-  map.fitBounds(bounds, {
+  const fitRoute = () => map.fitBounds(bounds, {
     paddingTopLeft: [35, 88],
     paddingBottomRight: [35, 98],
   });
+  fitRoute();
+  const fitControl = L.control({position: 'topright'});
+  fitControl.onAdd = () => {
+    const button = L.DomUtil.create('button', 'light map-fit-control');
+    button.type = 'button';
+    button.title = 'Fit route to map';
+    button.setAttribute('aria-label', button.title);
+    button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6"/><circle cx="12" cy="12" r="3"/></svg>';
+    L.DomEvent.disableClickPropagation(button);
+    L.DomEvent.on(button, 'click', fitRoute);
+    return button;
+  };
+  fitControl.addTo(map);
   line = L.layerGroup().addTo(map);
   routeHitLine = L.polyline(segments, {color: categories.unknown.color, weight: 6, opacity: .95}).addTo(map);
   const finish = route.roundTrip === false ? 'End' : 'Turnaround';
