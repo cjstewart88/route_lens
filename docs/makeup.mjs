@@ -1,11 +1,11 @@
-import {classify, pointAt} from './core.mjs?v=georgia-2';
-import {readManifest, classifyGeorgia} from './georgia.mjs?v=4';
-import {readNationalManifest, readStateManifests, classifyNational} from './national.mjs?v=2';
+import {classify, pointAt} from './core.mjs?v=georgia-3';
+import {readManifest, classifyGeorgia} from './georgia.mjs?v=5';
+import {readNationalManifest, readStateManifests, classifyNational} from './national.mjs?v=3';
 
 const endpoint = 'https://overpass-api.de/api/interpreter';
 const geographicStep = .025;
 const maxAreas = 64;
-const cacheSlot = 'routeLens.uploadedMakeup.v4';
+const cacheSlot = 'routeLens.uploadedMakeup.v5';
 const firstRetryMs = 5000;
 const maxBackoffMs = 60000;
 

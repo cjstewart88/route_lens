@@ -1,9 +1,9 @@
 import {parseGpx, encodeGpx, decodeGpx, maxGpxBytes, maxSharedUrlLength} from './gpx.mjs';
-import {lookupRouteMakeup} from './makeup.mjs?v=us-2';
-import {attachPlaces} from './places.mjs?v=18';
+import {lookupRouteMakeup} from './makeup.mjs?v=us-3';
+import {attachPlaces} from './places.mjs?v=19';
 import {importRideWithGps, RouteUnavailableError} from './rwgps.mjs?v=recents-1';
 import {listRecentRoutes, readRecentFile, forgetRecentRoute, rememberRoute} from './recents.mjs';
-import {MILE,categories,pointAt,routeHeading,tripDistance,tripPosition,calculate,composition,sampleType} from './core.mjs?v=georgia-2';
+import {MILE,categories,pointAt,routeHeading,tripDistance,tripPosition,calculate,composition,sampleType} from './core.mjs?v=georgia-3';
 const $=id=>document.getElementById(id);
 const compactMap = window.matchMedia('(max-width: 720px)');
 const streetOverlay = $('streetOverlay');

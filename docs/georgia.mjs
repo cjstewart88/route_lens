@@ -1,4 +1,4 @@
-import {classify, pointAt, sampleStarts} from './core.mjs?v=georgia-2';
+import {classify, pointAt, sampleStarts} from './core.mjs?v=georgia-3';
 
 // Both deployments use the same published road files. Local and self-hosted
 // copies resolve the files alongside this module.

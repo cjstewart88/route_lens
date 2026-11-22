@@ -40,14 +40,23 @@ export function typeOf(tags) {
   if (surfaces.every(surface => dirtGravelSurfaces.has(surface.trim()))) return 'gravel';
   return highway === 'track' ? 'other' : 'road';
 }
+// The compact snapshots omit access tags. These Williamsburg Bridge traffic
+// decks are tagged bicycle=no, alongside a separately mapped cycleway.
+const restrictedBridgeDecks = new Set([40337615, 40337665, 46359922, 46359926, 521358284, 546364858]);
+
 export function* sampleStarts(route) {
   for (let start = 0; start < route.distanceMeters; start += 25) yield start;
 }
 export function classify(route,osm,starts=sampleStarts(route)){const middleLatitude=route.points[Math.floor(route.points.length/2)][0];const sx=111195*Math.cos(middleLatitude*Math.PI/180),sy=111195,project=p=>[p[1]*sx,p[0]*sy],cell=80,grid=new Map();let segments=[];
- for(const w of osm.elements||[]){if(!w.geometry||!w.tags?.highway||w.tags.area==='yes')continue;const category=typeOf(w.tags);for(let i=1;i<w.geometry.length;i++){const a=project([w.geometry[i-1].lat,w.geometry[i-1].lon]),b=project([w.geometry[i].lat,w.geometry[i].lon]),dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy);if(!len)continue;const s={a,b,dx,dy,len,category,id:w.id,name:w.tags.name||w.tags.highway,surface:w.tags.surface||'Not tagged'};const index=segments.push(s)-1;for(let x=Math.floor(Math.min(a[0],b[0])/cell);x<=Math.floor(Math.max(a[0],b[0])/cell);x++)for(let y=Math.floor(Math.min(a[1],b[1])/cell);y<=Math.floor(Math.max(a[1],b[1])/cell);y++){const k=x+','+y;if(!grid.has(k))grid.set(k,[]);grid.get(k).push(index);}}}
+ for(const w of osm.elements||[]){if(!w.geometry||!w.tags?.highway||w.tags.area==='yes')continue;const category=typeOf(w.tags);for(let i=1;i<w.geometry.length;i++){const a=project([w.geometry[i-1].lat,w.geometry[i-1].lon]),b=project([w.geometry[i].lat,w.geometry[i].lon]),dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy);if(!len)continue;const s={a,b,dx,dy,len,category,id:w.id,highway:w.tags.highway,bikeRestricted:w.tags.bicycle==='no'||(w.tags.bicycle===undefined&&restrictedBridgeDecks.has(Number(w.id))),name:w.tags.name||w.tags.highway,surface:w.tags.surface||'Not tagged'};const index=segments.push(s)-1;for(let x=Math.floor(Math.min(a[0],b[0])/cell);x<=Math.floor(Math.max(a[0],b[0])/cell);x++)for(let y=Math.floor(Math.min(a[1],b[1])/cell);y<=Math.floor(Math.max(a[1],b[1])/cell);y++){const k=x+','+y;if(!grid.has(k))grid.set(k,[]);grid.get(k).push(index);}}}
  const samples=[];for(const start of starts){const end=Math.min(start+25,route.distanceMeters),mid=(start+end)/2,p=pointAt(route,mid),a=pointAt(route,Math.max(0,mid-8)),b=pointAt(route,Math.min(route.distanceMeters,mid+8)),q=project([p.lat,p.lng]),vx=(b.lng-a.lng)*sx,vy=(b.lat-a.lat)*sy,vl=Math.hypot(vx,vy),ids=new Set(),gx=Math.floor(q[0]/cell),gy=Math.floor(q[1]/cell);for(let x=gx-1;x<=gx+1;x++)for(let y=gy-1;y<=gy+1;y++)for(const id of grid.get(x+','+y)||[])ids.add(id);const candidates=[];
  for(const id of ids){const s=segments[id],t=Math.max(0,Math.min(1,((q[0]-s.a[0])*s.dx+(q[1]-s.a[1])*s.dy)/(s.len*s.len))),d=Math.hypot(q[0]-s.a[0]-t*s.dx,q[1]-s.a[1]-t*s.dy),alignment=Math.abs((vx*s.dx+vy*s.dy)/(vl*s.len));if(d<=25&&alignment>=.7)candidates.push({...s,d,score:d+(1-alignment)*15});}
- candidates.sort((a,b)=>a.score-b.score);const best=candidates[0],ambiguous=best&&candidates.some(c=>displayCategory(c.category)!==displayCategory(best.category)&&c.score-best.score<7);samples.push({start,end,category:!best||ambiguous?'unknown':best.category,name:best?.name||'No confident match',surface:best?.surface||'Not tagged',way:best?.id||null,ambiguous:!!ambiguous});}
+ candidates.sort((a,b)=>a.score-b.score);const best=candidates[0];
+ const closeCycleway=best?.highway==='cycleway'&&best.d<=8;
+ const ambiguous=best&&candidates.some(candidate=>
+   displayCategory(candidate.category)!==displayCategory(best.category)&&
+   candidate.score-best.score<7&&
+   !(closeCycleway&&candidate.category==='road'&&candidate.bikeRestricted));samples.push({start,end,category:!best||ambiguous?'unknown':best.category,name:best?.name||'No confident match',surface:best?.surface||'Not tagged',way:best?.id||null,ambiguous:!!ambiguous});}
  return {samples,osmDate:osm.osm3s?.timestamp_osm_base||null,method:'25 m samples; 25 m match radius; direction agreement; 7 m ambiguity margin'};
 }
 export function displayCategory(category) {
